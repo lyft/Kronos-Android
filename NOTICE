@@ -1,0 +1,1 @@
+This library includes a SntpClient class that originates from Google https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/net/SntpClient.java which is under Apache License (Version 2.0)

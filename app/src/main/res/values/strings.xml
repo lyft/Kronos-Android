@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Kronos NTP Clock Library</string>
+    <string name="kronos_clock">Kronos Clock</string>
+    <string name="android_clock">Android Clock</string>
+    <string name="description_text">Try changing your Android device\'s clock and see that the Kronos Clock continues to operate normally</string>
+    <string name="date_and_time_settings">Date and time Settings</string>
+</resources>
