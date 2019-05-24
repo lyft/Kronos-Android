@@ -11,4 +11,4 @@ publishing {
     }
 }
 
-apply from: "$rootDir/gradle/bintray.gradle"
+apply from: "$rootDir/gradle/publish.gradle"
