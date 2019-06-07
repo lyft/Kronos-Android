@@ -36,6 +36,11 @@ interface KronosClock : Clock {
         return getCurrentTime().posixTimeMs
     }
 
+    /**
+     * @return the current time in milliseconds, or null if no ntp sync has occurred.
+     */
+    fun getCurrentNtpTimeMs(): Long?
+
     fun sync(): Boolean
     fun syncInBackground()
     fun shutdown()
