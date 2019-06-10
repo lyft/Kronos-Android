@@ -2,7 +2,7 @@ package com.lyft.kronos
 
 interface Clock {
     /**
-     * @return the current time in milliseconds.
+     * @return the current time in milliseconds (the number of milliseconds that have elapsed since 00:00:00 Coordinated Universal Time (UTC), Thursday, 1 January 1970).
      */
     fun getCurrentTimeMs(): Long
 
@@ -24,14 +24,17 @@ data class KronosTime(
         val timeSinceLastNtpSyncMs: Long?
 )
 
-/**
- * When [KronosClock] has been synchronized, calling [getCurrentTimeMs]
- * will return the true time. However if [sync] fails or the class has
- * been shutdown via [shutdown] method, then it will return the time
- * indicated by the local device.
- */
 interface KronosClock : Clock {
-    fun getCurrentTime(): KronosTime
+
+    /**
+     * Return the number of milliseconds that have elapsed since 00:00:00 Coordinated Universal Time (UTC), Thursday, 1 January 1970.
+     *
+     * Note that calling this method will trigger [syncInBackground] being called when necessary.
+     * You should still call [sync]/[syncInBackground] once to ensure you have the correct time
+     * as soon as possible.
+     *
+     * @return the current time in milliseconds.
+     */
     override fun getCurrentTimeMs(): Long {
         return getCurrentTime().posixTimeMs
     }
@@ -41,7 +44,26 @@ interface KronosClock : Clock {
      */
     fun getCurrentNtpTimeMs(): Long?
 
+    /**
+     * @return [KronosTime] for the current time
+     */
+    fun getCurrentTime(): KronosTime
+
+    /**
+     * Synchronize time with an NTP server.
+     *
+     * @return true on the first successful response, false if no successful response.
+     */
     fun sync(): Boolean
+
+    /**
+     * Calls [sync] in a background thread. This method returns immediately.
+     */
     fun syncInBackground()
+
+    /**
+     * Shuts down the thread that performs syncing in the background. Any subsequent call to [currentTime]
+     * will throw [IllegalStateException]. You can call [shutdown] when you no longer need this service.
+     */
     fun shutdown()
 }
