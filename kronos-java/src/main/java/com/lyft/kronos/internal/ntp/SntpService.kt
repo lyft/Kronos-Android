@@ -46,7 +46,7 @@ internal interface SntpService {
 
     /**
      * You should call [shutdown] when you no longer need this service. This will shutdown
-     * the thread that perform sync in the background. Any subsequent call to [currentTimeMs]
+     * the thread that perform sync in the background. Any subsequent call to [currentTime]
      * will throw [IllegalStateException].
      */
     fun shutdown()
