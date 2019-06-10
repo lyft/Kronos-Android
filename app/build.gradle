@@ -3,6 +3,7 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
 android {
+    buildToolsVersion versions.buildTools
     compileSdkVersion 27
     defaultConfig {
         applicationId "com.lyft.kronos.demo"

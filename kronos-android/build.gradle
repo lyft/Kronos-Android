@@ -3,6 +3,7 @@ apply plugin: 'kotlin-android'
 apply from: "$rootDir/gradle/publish-android.gradle"
 
 android {
+    buildToolsVersion versions.buildTools
     compileSdkVersion 27
 
     defaultConfig {

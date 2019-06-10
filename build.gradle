@@ -17,6 +17,8 @@ buildscript {
     }
 }
 
+apply from: "dependencies.gradle"
+
 group = 'com.lyft.kronos'
 version = projectVersion()
 
