@@ -3,7 +3,8 @@ Synchronized Time Android Library
 
 Kronos is an open source Network Time Protocol (NTP) synchronization library for providing a trusted clock on the JVM.
 
-Unlike the device clock, the time reported by Kronos is unaffected when the local time is changed while your app is running. Instead, Kronos stores _accurate time_ along with a delta between the NTP time and the system uptime. Since uptime increases monotonically, Kronos isn't affected by device time changes. Accessing `KronosClock.getCurrentTimeMs()` will return the local time based on the last known _accurate time + delta since last sync_.
+Unlike the device clock, the time reported by Kronos is unaffected when the local time is changed while your app is running. Instead, Kronos stores _accurate time_ along with a delta between the NTP time and the system uptime. Since uptime increases monotonically, Kronos isn't affected by device time changes.
+Accessing `KronosClock.getCurrentTimeMs()` will return the local time based on the last known _accurate time + delta since last sync_.
 
 Introduction
 ------------
