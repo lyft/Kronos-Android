@@ -24,7 +24,7 @@ class KronosClockTest {
     }
 
     @Test
-    fun currentTimeUsesNtpTimeWhenAvailable() {
+    fun `currentTimeMs uses NTP time when available`() {
         whenever(ntpService.currentTime()).thenReturn(KronosTime(5678L, 0L))
         whenever(deviceClock.getCurrentTimeMs()).thenReturn(1234L)
 
@@ -34,17 +34,17 @@ class KronosClockTest {
     }
 
     @Test
-    fun currentTimeDelegatesWhenNtpTimeNotAvailable() {
+    fun `currentTimeMs delegates when NTP time not available`() {
         whenever(ntpService.currentTime()).thenReturn(null)
         whenever(deviceClock.getCurrentTimeMs()).thenReturn(1234L)
 
-        assertThat(kronosClock.getCurrentTime().posixTimeMs).isEqualTo(1234L)
+        assertThat(kronosClock.getCurrentTimeMs()).isEqualTo(1234L)
         verify(deviceClock).getCurrentTimeMs()
         verify(ntpService).currentTime()
     }
 
     @Test
-    fun elapsedShouldAlwaysDelegate() {
+    fun `elapsedTimeMs should always delegate`() {
         whenever(deviceClock.getElapsedTimeMs()).thenReturn(1234L)
 
         assertThat(kronosClock.getElapsedTimeMs()).isEqualTo(1234L)

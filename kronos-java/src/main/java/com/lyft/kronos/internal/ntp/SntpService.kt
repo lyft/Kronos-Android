@@ -8,6 +8,7 @@ import com.lyft.kronos.DefaultParam.TIMEOUT_MS
 import com.lyft.kronos.KronosTime
 import com.lyft.kronos.SyncListener
 import com.lyft.kronos.internal.Constants
+import java.lang.IllegalArgumentException
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
@@ -150,6 +151,9 @@ internal class SntpServiceImpl @JvmOverloads constructor(private val sntpClient:
             ntpSyncListener?.onStartSync(host)
             try {
                 val response = sntpClient.requestTime(host, requestTimeoutMs)
+                if (response.currentTimeMs < 0) {
+                    throw IllegalArgumentException("Invalid time ${response.currentTimeMs} received from $host")
+                }
                 responseCache.update(response)
                 val cachedOffset = response.offsetMs
                 val intCachedOffset = Math.min(cachedOffset, Integer.MAX_VALUE.toLong()).toInt()
