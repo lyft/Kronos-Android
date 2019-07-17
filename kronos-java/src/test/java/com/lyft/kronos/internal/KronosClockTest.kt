@@ -50,13 +50,4 @@ class KronosClockTest {
         assertThat(kronosClock.getElapsedTimeMs()).isEqualTo(1234L)
         verify(deviceClock).getElapsedTimeMs()
     }
-
-    @Test
-    fun `Use local time if NTP clock value is negative`() {
-        whenever(ntpService.currentTime()).thenReturn(KronosTime(-1, 0L))
-        whenever(deviceClock.getCurrentTimeMs()).thenReturn(1234L)
-
-        assertThat(kronosClock.getCurrentTimeMs()).isEqualTo(1234L)
-        verify(deviceClock).getCurrentTimeMs()
-    }
 }

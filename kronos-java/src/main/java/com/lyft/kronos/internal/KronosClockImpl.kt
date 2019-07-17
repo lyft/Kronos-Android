@@ -17,14 +17,8 @@ internal class KronosClockImpl(private val ntpService: SntpService, private val 
 
     override fun getCurrentTime(): KronosTime {
         val currentTime = ntpService.currentTime()
-        return if (currentTime?.isPosixTimeValid() == true) {
-            currentTime
-        } else {
-            KronosTime(posixTimeMs = fallbackClock.getCurrentTimeMs(), timeSinceLastNtpSyncMs = null)
-        }
+        return currentTime ?: KronosTime(posixTimeMs = fallbackClock.getCurrentTimeMs(), timeSinceLastNtpSyncMs = null)
     }
 
     override fun getCurrentNtpTimeMs() : Long? = ntpService.currentTime()?.posixTimeMs
-
-    private fun KronosTime.isPosixTimeValid() = this.posixTimeMs >= 0
 }

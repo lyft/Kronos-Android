@@ -7,6 +7,7 @@ import com.nhaarman.mockito_kotlin.*
 import org.assertj.core.api.Assertions.*
 import org.junit.Test
 import java.io.IOException
+import java.lang.IllegalArgumentException
 
 class SntpServiceTest {
     private val sntpService : SntpService
@@ -62,5 +63,15 @@ class SntpServiceTest {
         assertThatExceptionOfType(IllegalStateException::class.java).isThrownBy { sntpService.sync() }
         assertThatExceptionOfType(IllegalStateException::class.java).isThrownBy { sntpService.syncInBackground() }
         assertThatExceptionOfType(IllegalStateException::class.java).isThrownBy { sntpService.currentTimeMs() }
+    }
+
+    @Test
+    fun `throw error if response has negative time value`() {
+        whenever(sntpClient.requestTime("1.us.pool.ntp.org", TIMEOUT_MS)).thenReturn(mockResponse)
+        whenever(sntpClient.requestTime("2.us.pool.ntp.org", TIMEOUT_MS)).thenReturn(mockResponse)
+        whenever(mockResponse.currentTimeMs).thenReturn(-1)
+        assertThat(sntpService.sync()).isFalse()
+
+        verify(sntpSyncListener, times(1)).onError(any(), any<IllegalStateException>())
     }
 }
