@@ -152,7 +152,7 @@ internal class SntpServiceImpl @JvmOverloads constructor(private val sntpClient:
             try {
                 val response = sntpClient.requestTime(host, requestTimeoutMs)
                 if (response.currentTimeMs < 0) {
-                    throw IllegalArgumentException("Response.currentTimeMs is negative")
+                    throw IllegalArgumentException("Invalid time ${response.currentTimeMs} received from $host")
                 }
                 responseCache.update(response)
                 val cachedOffset = response.offsetMs
