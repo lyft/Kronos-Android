@@ -38,6 +38,8 @@ else
     gpg_import_result=$?
     set -e
 
+    unset GPG_SECRET_KEYS
+
     # Code '2' means that keys were already in local keychain.
     if [ "$gpg_import_result" == "0" ] || [ "$gpg_import_result" == "2" ]; then
         echo "GPG keys imported successfully."
@@ -49,6 +51,7 @@ else
     echo 'Importing GPG ownertrust...'
     echo "$GPG_OWNERTRUST" | base64 --decode | gpg --import-ownertrust;
     echo 'GPG ownertrust imported successfully.'
+    unset GPG_OWNERTRUST
 
-    #./gradlew uploadArchives closeAndReleaseRepository -Psigning.keyId="$GPG_KEY_ID" -Psigning.password="$GPG_PASSPHRASE" -Psigning.secretKeyRingFile="$HOME/.gnupg/secring.gpg"
+    #./gradlew build uploadArchives closeAndReleaseRepository -Psigning.keyId="$GPG_KEY_ID" -Psigning.password="$GPG_PASSPHRASE" -Psigning.secretKeyRingFile="$HOME/.gnupg/secring.gpg"
 fi
