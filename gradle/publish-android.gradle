@@ -44,4 +44,4 @@ project.afterEvaluate {
     }
 }
 
-apply from: "$rootDir/gradle/bintray.gradle"
+apply from: "$rootDir/gradle/publish.gradle"

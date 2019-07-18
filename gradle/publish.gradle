@@ -1,21 +1,5 @@
-apply plugin: 'com.jfrog.bintray'
-
-bintray {
-    user = System.getenv('PUB_API_USER')
-    key = System.getenv('PUB_API_KEY')
-    pkg {
-        repo = System.getenv('PUB_REPO_NAME')
-        name = System.getenv('PUB_PACKAGE_NAME')
-        userOrg = System.getenv('PUB_SUBJECT_NAME')
-        licenses = ['Apache-2.0']
-        vcsUrl = System.getenv('PUB_VCS_URL')
-        version {
-            name = project.version
-        }
-    }
-    publications = ['LibraryPublication']
-    publish = true
-}
+apply plugin: 'de.marcphilipp.nexus-publish'
+apply plugin: 'signing'
 
 private def validateTagAndVersionForPublishing() {
     if (gitTag().isEmpty()) {
@@ -49,4 +33,14 @@ task validatePublishing {
     }
 }
 
-bintrayUpload.dependsOn validatePublishing
+signing {
+    required { gradle.taskGraph.hasTask("uploadArchives") }
+    sign configurations.archives
+}
+
+nexusPublishing {
+    username = System.getenv("MAVEN_CENTRAL_USERNAME")
+    password = System.getenv("MAVEN_CENTRAL_PASSWORD")
+}
+
+uploadArchives.dependsOn validatePublishing
