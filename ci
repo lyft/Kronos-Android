@@ -7,7 +7,7 @@ PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 pushd "$PROJECT_DIR"
 
 # Export "PUBLISH_RELEASE=true" to initiate release process.
-if [ "$PUBLISH_RELEASE" != "true" ]; then
+if [ "${PUBLISH_RELEASE:-}" != "true" ]; then
     echo "Running non-release build...".
     ./gradlew build
 else
