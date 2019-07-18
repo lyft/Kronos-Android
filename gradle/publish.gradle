@@ -34,7 +34,7 @@ task validatePublishing {
 }
 
 signing {
-    required { gradle.taskGraph.hasTask("uploadArchives") }
+    required { gradle.taskGraph.hasTask("publishToNexus") }
     sign configurations.archives
 }
 
@@ -43,4 +43,4 @@ nexusPublishing {
     password = System.getenv("MAVEN_CENTRAL_PASSWORD")
 }
 
-uploadArchives.dependsOn validatePublishing
+publishToNexus.dependsOn validatePublishing
