@@ -16,6 +16,14 @@ install:
 script:
   - ./ci
 
+deploy:
+  skip_cleanup: true
+  provider: script
+  script: PUBLISH_RELEASE=true ./ci.sh
+  on:
+    repo: lyft/Kronos-Android
+    tags: true
+
 before_cache:
   - rm -f "$HOME"/.gradle/caches/modules-2/modules-2.lock
 
