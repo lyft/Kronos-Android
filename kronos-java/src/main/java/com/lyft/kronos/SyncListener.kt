@@ -5,7 +5,7 @@ interface SyncListener {
 
     fun onStartSync(host: String)
 
-    fun onSuccess(ticksDelta: Int, responseTimeMs: Long)
+    fun onSuccess(ticksDelta: Long, responseTimeMs: Long)
 
     fun onError(host: String, throwable: Throwable)
 }
