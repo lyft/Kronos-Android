@@ -42,7 +42,13 @@ public class SntpClient {
 
     private static final int NTP_PORT = 123;
     private static final int NTP_MODE_CLIENT = 3;
+    private static final int NTP_MODE_SERVER = 4;
+    private static final int NTP_MODE_BROADCAST = 5;
     private static final int NTP_VERSION = 3;
+
+    private static final int NTP_LEAP_NOSYNC = 3;
+    private static final int NTP_STRATUM_DEATH = 0;
+    private static final int NTP_STRATUM_MAX = 15;
 
     // Number of seconds between Jan 1, 1900 and Jan 1, 1970
     // 70 years plus 17 leap days
@@ -69,6 +75,10 @@ public class SntpClient {
      * @throws IOException network error
      */
     public Response requestTime(String host, Long timeout) throws IOException {
+        return requestTime(host, timeout, true);
+    }
+
+    Response requestTime(String host, Long timeout, boolean validateServerReply) throws IOException {
         DatagramSocket socket = null;
         try {
             InetAddress address = dnsResolver.resolve(host);
@@ -95,9 +105,17 @@ public class SntpClient {
             long responseTime = requestTime + (responseTicks - requestTicks);
 
             // extract the results
-            long originateTime = readTimeStamp(buffer, ORIGINATE_TIME_OFFSET);
-            long receiveTime = readTimeStamp(buffer, RECEIVE_TIME_OFFSET);
-            long transmitTime = readTimeStamp(buffer, TRANSMIT_TIME_OFFSET);
+            final byte leap = (byte) ((buffer[0] >> 6) & 0x3);
+            final byte mode = (byte) (buffer[0] & 0x7);
+            final int stratum = (int) (buffer[1] & 0xff);
+            final long originateTime = readTimeStamp(buffer, ORIGINATE_TIME_OFFSET);
+            final long receiveTime = readTimeStamp(buffer, RECEIVE_TIME_OFFSET);
+            final long transmitTime = readTimeStamp(buffer, TRANSMIT_TIME_OFFSET);
+
+            if (validateServerReply) {
+                checkValidServerReply(leap, mode, stratum, transmitTime);
+            }
+
             // long roundTripTime = responseTicks - requestTicks - (transmitTime - receiveTime);
             // receiveTime = originateTime + transit + skew
             // responseTime = transmitTime + transit - skew
@@ -116,6 +134,23 @@ public class SntpClient {
             if (socket != null) {
                 socket.close();
             }
+        }
+    }
+
+    private static void checkValidServerReply(
+            byte leap, byte mode, int stratum, long transmitTime)
+            throws IOException {
+        if (leap == NTP_LEAP_NOSYNC) {
+            throw new IOException("unsynchronized server");
+        }
+        if ((mode != NTP_MODE_SERVER) && (mode != NTP_MODE_BROADCAST)) {
+            throw new IOException("untrusted mode: " + mode);
+        }
+        if ((stratum == NTP_STRATUM_DEATH) || (stratum > NTP_STRATUM_MAX)) {
+            throw new IOException("untrusted stratum: " + stratum);
+        }
+        if (transmitTime == 0) {
+            throw new IOException("zero transmitTime");
         }
     }
 

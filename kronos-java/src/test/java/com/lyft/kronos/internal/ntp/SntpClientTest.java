@@ -60,7 +60,7 @@ public class SntpClientTest {
 
     @Test
     public void requestTimeMustSetModeAndVersion() throws IOException {
-        sntpClient.requestTime(HOST, TIMEOUT);
+        sntpClient.requestTime(HOST, TIMEOUT, false);
 
         ArgumentCaptor<byte[]> argumentCaptor = ArgumentCaptor.forClass(byte[].class);
 
@@ -81,7 +81,7 @@ public class SntpClientTest {
         DatagramPacket packet = mock(DatagramPacket.class);
         when(datagramFactory.createPacket(any(byte[].class), any(InetAddress.class), eq(123))).thenReturn(packet);
 
-        sntpClient.requestTime(HOST, TIMEOUT);
+        sntpClient.requestTime(HOST, TIMEOUT, false);
 
         ArgumentCaptor<byte[]> argumentCaptor = ArgumentCaptor.forClass(byte[].class);
 
@@ -139,7 +139,7 @@ public class SntpClientTest {
 
     @Test
     public void requestTimeMustCloseTheSocket() throws IOException {
-        sntpClient.requestTime(HOST, TIMEOUT);
+        sntpClient.requestTime(HOST, TIMEOUT, false);
 
         Mockito.verify(datagramSocket).close();
     }
@@ -163,7 +163,7 @@ public class SntpClientTest {
 
     @Test
     public void requestTimeShouldSetTimeout() throws IOException {
-        sntpClient.requestTime(HOST, 1234L);
+        sntpClient.requestTime(HOST, 1234L, false);
 
         Mockito.verify(datagramSocket).setSoTimeout(1234);
     }
