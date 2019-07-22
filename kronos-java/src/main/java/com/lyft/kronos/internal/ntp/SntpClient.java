@@ -60,6 +60,12 @@ public class SntpClient {
     private final DnsResolver dnsResolver;
     private final DatagramFactory datagramFactory;
 
+    private static class InvalidServerReplyException extends IOException {
+        public InvalidServerReplyException(String message) {
+            super(message);
+        }
+    }
+
     public SntpClient(Clock deviceClock, DnsResolver dnsResolver, DatagramFactory datagramFactory) {
         this.deviceClock = deviceClock;
         this.dnsResolver = dnsResolver;
@@ -139,18 +145,18 @@ public class SntpClient {
 
     private static void checkValidServerReply(
             byte leap, byte mode, int stratum, long transmitTime)
-            throws IOException {
+            throws InvalidServerReplyException {
         if (leap == NTP_LEAP_NOSYNC) {
-            throw new IOException("unsynchronized server");
+            throw new InvalidServerReplyException("unsynchronized server");
         }
         if ((mode != NTP_MODE_SERVER) && (mode != NTP_MODE_BROADCAST)) {
-            throw new IOException("untrusted mode: " + mode);
+            throw new InvalidServerReplyException("untrusted mode: " + mode);
         }
         if ((stratum == NTP_STRATUM_DEATH) || (stratum > NTP_STRATUM_MAX)) {
-            throw new IOException("untrusted stratum: " + stratum);
+            throw new InvalidServerReplyException("untrusted stratum: " + stratum);
         }
         if (transmitTime == 0) {
-            throw new IOException("zero transmitTime");
+            throw new InvalidServerReplyException("zero transmitTime");
         }
     }
 
