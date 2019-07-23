@@ -23,7 +23,7 @@ class DemoApplication : Application() {
             }
 
             override fun onError(host: String, throwable: Throwable) {
-                Log.d(TAG, "Clock sync failed ($host)", throwable)
+                Log.e(TAG, "Clock sync failed ($host)", throwable)
             }
         }
 

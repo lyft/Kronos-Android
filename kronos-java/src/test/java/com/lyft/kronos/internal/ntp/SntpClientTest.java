@@ -18,6 +18,7 @@ import org.mockito.stubbing.Answer;
 
 import static junit.framework.Assert.fail;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.same;
@@ -47,6 +48,22 @@ public class SntpClientTest {
         sntpClient = new SntpClient(deviceClock, dnsResolver, datagramFactory);
 
         when(dnsResolver.resolve(eq(HOST))).thenReturn(mock(Inet4Address.class));
+
+        setupValidServerReply();
+    }
+
+    private void setupValidServerReply() {
+        final byte[] response = {
+                0x1c, 0x2, 0x3, 0xffffffe9, 0x0, 0x0, 0x1, 0xffffffbb, 0x0, 0x0, 0x7, 0xffffffae, 0xffffff8e, 0x42, 0x65, 0xd,
+                0xffffffdb, 0x7a, 0x26, 0x1c, 0xffffff9b, 0x27, 0x6, 0xffffffa3, 0xffffffdb, 0x7a, 0x28, 0xffffff83, 0x32, 0x2d,
+                0xe, 0x7, 0xffffffdb, 0x7a, 0x28, 0xffffff84, 0x55, 0xffffffbc, 0x7e, 0xffffffef, 0xffffffdb, 0x7a, 0x28,
+                0xffffff84, 0x55, 0xffffffc1, 0x4, 0x3
+        };
+        when(datagramFactory.createPacket(any(byte[].class))).then((Answer<DatagramPacket>) invocation -> {
+            byte[] buffer = invocation.getArgument(0);
+            System.arraycopy(response, 0, buffer, 0, buffer.length);
+            return mock(DatagramPacket.class);
+        });
     }
 
     private void setupDeviceClock(long current) {
@@ -64,7 +81,7 @@ public class SntpClientTest {
 
         ArgumentCaptor<byte[]> argumentCaptor = ArgumentCaptor.forClass(byte[].class);
 
-        Mockito.verify(datagramFactory).createPacket(argumentCaptor.capture());
+        Mockito.verify(datagramFactory).createPacket(argumentCaptor.capture(), any(), anyInt());
 
         byte firstOctet = argumentCaptor.getValue()[0];
 
@@ -112,18 +129,6 @@ public class SntpClientTest {
                 .thenThrow(new RuntimeException("No more interactions expected."));
 
         final long ntpTime = 1473227268363L;
-        final byte[] response = {
-                0x1c, 0x2, 0x3, 0xffffffe9, 0x0, 0x0, 0x1, 0xffffffbb, 0x0, 0x0, 0x7, 0xffffffae, 0xffffff8e, 0x42, 0x65, 0xd,
-                0xffffffdb, 0x7a, 0x26, 0x1c, 0xffffff9b, 0x27, 0x6, 0xffffffa3, 0xffffffdb, 0x7a, 0x28, 0xffffff83, 0x32, 0x2d,
-                0xe, 0x7, 0xffffffdb, 0x7a, 0x28, 0xffffff84, 0x55, 0xffffffbc, 0x7e, 0xffffffef, 0xffffffdb, 0x7a, 0x28,
-                0xffffff84, 0x55, 0xffffffc1, 0x4, 0x3
-        };
-        when(datagramFactory.createPacket(any(byte[].class))).then((Answer<DatagramPacket>) invocation -> {
-            byte[] buffer = invocation.getArgument(0);
-            System.arraycopy(response, 0, buffer, 0, buffer.length);
-            return mock(DatagramPacket.class);
-        });
-
         final SntpClient.Response clientResponse = sntpClient.requestTime(HOST, TIMEOUT);
 
         Mockito.verify(datagramFactory).createPacket(any(byte[].class));

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.util.Arrays;
 
 /**
  * Forked from https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/net/SntpClient.java
@@ -42,7 +43,13 @@ public class SntpClient {
 
     private static final int NTP_PORT = 123;
     private static final int NTP_MODE_CLIENT = 3;
+    private static final int NTP_MODE_SERVER = 4;
+    private static final int NTP_MODE_BROADCAST = 5;
     private static final int NTP_VERSION = 3;
+
+    private static final int NTP_LEAP_NOSYNC = 3;
+    private static final int NTP_STRATUM_DEATH = 0;
+    private static final int NTP_STRATUM_MAX = 15;
 
     // Number of seconds between Jan 1, 1900 and Jan 1, 1970
     // 70 years plus 17 leap days
@@ -53,6 +60,12 @@ public class SntpClient {
     private final Clock deviceClock;
     private final DnsResolver dnsResolver;
     private final DatagramFactory datagramFactory;
+
+    private static class InvalidServerReplyException extends IOException {
+        public InvalidServerReplyException(String message) {
+            super(message);
+        }
+    }
 
     public SntpClient(Clock deviceClock, DnsResolver dnsResolver, DatagramFactory datagramFactory) {
         this.deviceClock = deviceClock;
@@ -74,30 +87,37 @@ public class SntpClient {
             InetAddress address = dnsResolver.resolve(host);
             socket = datagramFactory.createSocket();
             socket.setSoTimeout(timeout.intValue());
-            byte[] buffer = new byte[NTP_PACKET_SIZE];
-            DatagramPacket request = datagramFactory.createPacket(buffer, address, NTP_PORT);
+            byte[] requestBuffer = new byte[NTP_PACKET_SIZE];
+            DatagramPacket request = datagramFactory.createPacket(requestBuffer, address, NTP_PORT);
 
             // set mode = 3 (client) and version = 3
             // mode is in low 3 bits of first byte
             // version is in bits 3-5 of first byte
-            buffer[0] = NTP_MODE_CLIENT | (NTP_VERSION << 3);
+            requestBuffer[0] = NTP_MODE_CLIENT | (NTP_VERSION << 3);
 
             // get current time and write it to the request packet
             long requestTime = deviceClock.getCurrentTimeMs();
             long requestTicks = deviceClock.getElapsedTimeMs();
-            writeTimeStamp(buffer, TRANSMIT_TIME_OFFSET, requestTime);
+            writeTimeStamp(requestBuffer, TRANSMIT_TIME_OFFSET, requestTime);
             socket.send(request);
 
             // read the response
-            DatagramPacket response = datagramFactory.createPacket(buffer);
+            byte[] responseBuffer = Arrays.copyOf(requestBuffer, requestBuffer.length);
+            DatagramPacket response = datagramFactory.createPacket(responseBuffer);
             socket.receive(response);
             long responseTicks = deviceClock.getElapsedTimeMs();
             long responseTime = requestTime + (responseTicks - requestTicks);
 
             // extract the results
-            long originateTime = readTimeStamp(buffer, ORIGINATE_TIME_OFFSET);
-            long receiveTime = readTimeStamp(buffer, RECEIVE_TIME_OFFSET);
-            long transmitTime = readTimeStamp(buffer, TRANSMIT_TIME_OFFSET);
+            final byte leap = (byte) ((responseBuffer[0] >> 6) & 0x3);
+            final byte mode = (byte) (responseBuffer[0] & 0x7);
+            final int stratum = (int) (responseBuffer[1] & 0xff);
+            final long originateTime = readTimeStamp(responseBuffer, ORIGINATE_TIME_OFFSET);
+            final long receiveTime = readTimeStamp(responseBuffer, RECEIVE_TIME_OFFSET);
+            final long transmitTime = readTimeStamp(responseBuffer, TRANSMIT_TIME_OFFSET);
+
+            checkValidServerReply(leap, mode, stratum, transmitTime);
+
             // long roundTripTime = responseTicks - requestTicks - (transmitTime - receiveTime);
             // receiveTime = originateTime + transit + skew
             // responseTime = transmitTime + transit - skew
@@ -116,6 +136,23 @@ public class SntpClient {
             if (socket != null) {
                 socket.close();
             }
+        }
+    }
+
+    private static void checkValidServerReply(
+            byte leap, byte mode, int stratum, long transmitTime)
+            throws InvalidServerReplyException {
+        if (leap == NTP_LEAP_NOSYNC) {
+            throw new InvalidServerReplyException("unsynchronized server");
+        }
+        if ((mode != NTP_MODE_SERVER) && (mode != NTP_MODE_BROADCAST)) {
+            throw new InvalidServerReplyException("untrusted mode: " + mode);
+        }
+        if ((stratum == NTP_STRATUM_DEATH) || (stratum > NTP_STRATUM_MAX)) {
+            throw new InvalidServerReplyException("untrusted stratum: " + stratum);
+        }
+        if (transmitTime == 0) {
+            throw new InvalidServerReplyException("zero transmitTime");
         }
     }
 
