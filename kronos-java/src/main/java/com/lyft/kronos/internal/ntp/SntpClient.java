@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.util.Arrays;
 
 /**
  * Forked from https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/net/SntpClient.java
@@ -81,46 +82,41 @@ public class SntpClient {
      * @throws IOException network error
      */
     public Response requestTime(String host, Long timeout) throws IOException {
-        return requestTime(host, timeout, true);
-    }
-
-    Response requestTime(String host, Long timeout, boolean validateServerReply) throws IOException {
         DatagramSocket socket = null;
         try {
             InetAddress address = dnsResolver.resolve(host);
             socket = datagramFactory.createSocket();
             socket.setSoTimeout(timeout.intValue());
-            byte[] buffer = new byte[NTP_PACKET_SIZE];
-            DatagramPacket request = datagramFactory.createPacket(buffer, address, NTP_PORT);
+            byte[] requestBuffer = new byte[NTP_PACKET_SIZE];
+            DatagramPacket request = datagramFactory.createPacket(requestBuffer, address, NTP_PORT);
 
             // set mode = 3 (client) and version = 3
             // mode is in low 3 bits of first byte
             // version is in bits 3-5 of first byte
-            buffer[0] = NTP_MODE_CLIENT | (NTP_VERSION << 3);
+            requestBuffer[0] = NTP_MODE_CLIENT | (NTP_VERSION << 3);
 
             // get current time and write it to the request packet
             long requestTime = deviceClock.getCurrentTimeMs();
             long requestTicks = deviceClock.getElapsedTimeMs();
-            writeTimeStamp(buffer, TRANSMIT_TIME_OFFSET, requestTime);
+            writeTimeStamp(requestBuffer, TRANSMIT_TIME_OFFSET, requestTime);
             socket.send(request);
 
             // read the response
-            DatagramPacket response = datagramFactory.createPacket(buffer);
+            byte[] responseBuffer = Arrays.copyOf(requestBuffer, requestBuffer.length);
+            DatagramPacket response = datagramFactory.createPacket(responseBuffer);
             socket.receive(response);
             long responseTicks = deviceClock.getElapsedTimeMs();
             long responseTime = requestTime + (responseTicks - requestTicks);
 
             // extract the results
-            final byte leap = (byte) ((buffer[0] >> 6) & 0x3);
-            final byte mode = (byte) (buffer[0] & 0x7);
-            final int stratum = (int) (buffer[1] & 0xff);
-            final long originateTime = readTimeStamp(buffer, ORIGINATE_TIME_OFFSET);
-            final long receiveTime = readTimeStamp(buffer, RECEIVE_TIME_OFFSET);
-            final long transmitTime = readTimeStamp(buffer, TRANSMIT_TIME_OFFSET);
+            final byte leap = (byte) ((responseBuffer[0] >> 6) & 0x3);
+            final byte mode = (byte) (responseBuffer[0] & 0x7);
+            final int stratum = (int) (responseBuffer[1] & 0xff);
+            final long originateTime = readTimeStamp(responseBuffer, ORIGINATE_TIME_OFFSET);
+            final long receiveTime = readTimeStamp(responseBuffer, RECEIVE_TIME_OFFSET);
+            final long transmitTime = readTimeStamp(responseBuffer, TRANSMIT_TIME_OFFSET);
 
-            if (validateServerReply) {
-                checkValidServerReply(leap, mode, stratum, transmitTime);
-            }
+            checkValidServerReply(leap, mode, stratum, transmitTime);
 
             // long roundTripTime = responseTicks - requestTicks - (transmitTime - receiveTime);
             // receiveTime = originateTime + transit + skew
