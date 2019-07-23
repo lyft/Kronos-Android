@@ -156,9 +156,8 @@ internal class SntpServiceImpl @JvmOverloads constructor(private val sntpClient:
                 }
                 responseCache.update(response)
                 val cachedOffset = response.offsetMs
-                val intCachedOffset = Math.min(cachedOffset, Integer.MAX_VALUE.toLong()).toInt()
                 val responseTime = deviceClock.getElapsedTimeMs() - t1
-                ntpSyncListener?.onSuccess(intCachedOffset, responseTime)
+                ntpSyncListener?.onSuccess(cachedOffset, responseTime)
                 return true
             } catch (e: Throwable) {
                 ntpSyncListener?.onError(host, e)

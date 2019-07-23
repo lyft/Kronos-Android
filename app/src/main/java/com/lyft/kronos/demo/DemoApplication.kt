@@ -18,7 +18,7 @@ class DemoApplication : Application() {
                 Log.d(TAG, "Clock sync started ($host)")
             }
 
-            override fun onSuccess(ticksDelta: Int, responseTimeMs: Long) {
+            override fun onSuccess(ticksDelta: Long, responseTimeMs: Long) {
                 Log.d(TAG, "Clock sync succeed. Time delta: $ticksDelta. Response time: $responseTimeMs")
             }
 
