@@ -18,13 +18,6 @@ private def validateTagAndVersionForPublishing() {
         throw new IllegalStateException(
             "Publishing is not allowed because current projectVersion " + "is not semantic, should have 3 components. projectVersion = $projectVersion")
     }
-
-    for (String semVerComponent : semVerComponents) {
-        if (!semVerComponent.isInteger() || Integer.parseInt(semVerComponent) < 0) {
-            throw new IllegalStateException(
-                "Publishing is not allowed because current projectVersion " + "is not semantic, components should be integers. projectVersion = $projectVersion")
-        }
-    }
 }
 
 task validatePublishing {
