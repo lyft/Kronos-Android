@@ -34,14 +34,17 @@ task validatePublishing {
 }
 
 signing {
-    required { gradle.taskGraph.hasTask("publishToNexus") }
+    required { gradle.taskGraph.hasTask("publishToSonatype") }
     sign configurations.archives
 }
 
 nexusPublishing {
-    packageGroup = 'com.lyft.kronos'
-    username = System.getenv("MAVEN_CENTRAL_USERNAME")
-    password = System.getenv("MAVEN_CENTRAL_PASSWORD")
+    repositories {
+        sonatype {
+            username = System.getenv("MAVEN_CENTRAL_USERNAME")
+            password = System.getenv("MAVEN_CENTRAL_PASSWORD")
+        }
+    }
 }
 
-publishToNexus.dependsOn validatePublishing
+publishToSonatype.dependsOn validatePublishing
