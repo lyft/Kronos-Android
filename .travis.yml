@@ -19,7 +19,7 @@ script:
 deploy:
   skip_cleanup: true
   provider: script
-  script: PUBLISH_RELEASE=true ./ci.sh
+  script: PUBLISH_RELEASE=true ./ci
   on:
     repo: lyft/Kronos-Android
     tags: true
