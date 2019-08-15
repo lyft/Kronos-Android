@@ -9,7 +9,7 @@ pushd "$PROJECT_DIR"
 # Export "PUBLISH_RELEASE=true" to initiate release process.
 if [ "${PUBLISH_RELEASE:-}" != "true" ]; then
     echo "Running non-release build...".
-    ./gradlew build
+    ./gradlew --stacktrace --info build
 else
     echo "Launching release publishing process..."
 
@@ -53,5 +53,5 @@ else
     echo 'GPG ownertrust imported successfully.'
     unset GPG_OWNERTRUST
 
-    ./gradlew build publishToSonatype -Psigning.keyId="$GPG_KEY_ID" -Psigning.password="$GPG_PASSPHRASE" -Psigning.secretKeyRingFile="$HOME/.gnupg/secring.gpg"
+    ./gradlew --stacktrace --info build publishToSonatype -Psigning.keyId="$GPG_KEY_ID" -Psigning.password="$GPG_PASSPHRASE" -Psigning.secretKeyRingFile="$HOME/.gnupg/secring.gpg"
 fi
