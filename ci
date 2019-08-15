@@ -9,7 +9,7 @@ pushd "$PROJECT_DIR"
 # Export "PUBLISH_RELEASE=true" to initiate release process.
 if [ "${PUBLISH_RELEASE:-}" != "true" ]; then
     echo "Running non-release build...".
-    ./gradlew --stacktrace --info build
+    ./gradlew --stacktrace build
 else
     echo "Launching release publishing process..."
 
