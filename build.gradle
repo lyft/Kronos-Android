@@ -68,6 +68,7 @@ private def projectVersion() {
 apply plugin: 'io.codearte.nexus-staging'
 
 nexusStaging {
+    packageGroup = "com.lyft"
     username = System.getenv("MAVEN_CENTRAL_USERNAME")
     password = System.getenv("MAVEN_CENTRAL_PASSWORD")
 }
