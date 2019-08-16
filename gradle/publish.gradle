@@ -34,17 +34,19 @@ task validatePublishing {
 }
 
 signing {
-    required { gradle.taskGraph.hasTask("publishToSonatype") }
+    required { gradle.taskGraph.hasTask("publishToMyNexus") }
     sign configurations.archives
 }
 
 nexusPublishing {
     repositories {
-        sonatype {
+        myNexus {
+            nexusUrl = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+            snapshotRepositoryUrl = uri("https://oss.sonatype.org/content/repositories/snapshots/")
             username = System.getenv("MAVEN_CENTRAL_USERNAME")
             password = System.getenv("MAVEN_CENTRAL_PASSWORD")
         }
     }
 }
 
-publishToSonatype.dependsOn validatePublishing
+publishToMyNexus.dependsOn validatePublishing
