@@ -1,4 +1,13 @@
 apply plugin: 'maven-publish'
+apply plugin: 'org.jetbrains.dokka-android'
+
+task sourcesJar(type: Jar) {
+    from project.android.sourceSets.main.java.srcDirs
+}
+
+task javadocJar(type: Jar, dependsOn: dokka) {
+    from dokka.outputDirectory
+}
 
 project.afterEvaluate {
     publishing {
@@ -8,6 +17,15 @@ project.afterEvaluate {
                 artifactId project.name
                 version project.version
                 artifact bundleReleaseAar
+
+                artifact sourcesJar {
+                    classifier "sources"
+                }
+
+                artifact javadocJar {
+                    classifier "javadoc"
+                }
+
                 pom.withXml {
                     final dependencies = asNode().appendNode('dependencies')
 

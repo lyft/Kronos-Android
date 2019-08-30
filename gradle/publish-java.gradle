@@ -1,5 +1,13 @@
 apply plugin: 'maven-publish'
 
+task sourcesJar(type: Jar, dependsOn: classes) {
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    from javadoc.destinationDir
+}
+
 publishing {
     publications {
         LibraryPublication(MavenPublication) {
@@ -7,6 +15,14 @@ publishing {
             artifactId project.name
             version project.version
             from components.java
+
+            artifact sourcesJar {
+                classifier "sources"
+            }
+
+            artifact javadocJar {
+                classifier "javadoc"
+            }
         }
     }
 }

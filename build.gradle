@@ -11,7 +11,7 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:3.4.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-
+        classpath "org.jetbrains.dokka:dokka-android-gradle-plugin:0.9.18"
         // Uploads artifacts to oss.sonatype.org
         classpath "de.marcphilipp.gradle:nexus-publish-plugin:0.3.0"
         // "Closes" and "Releases" repository on oss.sonatype.org to finish release process.
