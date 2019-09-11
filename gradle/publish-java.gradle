@@ -1,4 +1,5 @@
 apply plugin: 'maven-publish'
+apply from: "$rootProject.rootDir/gradle/pom.gradle"
 
 task sourcesJar(type: Jar, dependsOn: classes) {
     from sourceSets.main.allSource
@@ -23,6 +24,8 @@ publishing {
             artifact javadocJar {
                 classifier "javadoc"
             }
+
+            with(pomMetadata)
         }
     }
 }

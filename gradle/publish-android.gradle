@@ -1,5 +1,6 @@
 apply plugin: 'maven-publish'
 apply plugin: 'org.jetbrains.dokka-android'
+apply from: "$rootProject.rootDir/gradle/pom.gradle"
 
 task sourcesJar(type: Jar) {
     from project.android.sourceSets.main.java.srcDirs
@@ -25,6 +26,8 @@ project.afterEvaluate {
                 artifact javadocJar {
                     classifier "javadoc"
                 }
+
+                with(pomMetadata)
 
                 pom.withXml {
                     final dependencies = asNode().appendNode('dependencies')
