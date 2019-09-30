@@ -4,7 +4,7 @@ set -euo pipefail
 # You can run it from any directory.
 PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-pushd "$PROJECT_DIR"
+pushd "$PROJECT_DIR" > /dev/null
 
 # Export "PUBLISH_RELEASE=true" to initiate release process.
 if [ "${PUBLISH_RELEASE:-}" != "true" ]; then
@@ -13,22 +13,22 @@ if [ "${PUBLISH_RELEASE:-}" != "true" ]; then
 else
     echo "Launching release publishing process..."
 
-    if [ -z "$GPG_SECRET_KEYS" ]; then
+    if [ -z "${GPG_SECRET_KEYS:-}" ]; then
         echo "Put base64 encoded gpg secret key for signing into GPG_SECRET_KEYS env variable."
         exit 1
     fi
 
-    if [ -z "$GPG_OWNERTRUST" ]; then
+    if [ -z "${GPG_OWNERTRUST:-}" ]; then
         echo "Put base64 encoded gpg ownertrust for signing into GPG_OWNERTRUST env variable."
         exit 1
     fi
 
-    if [ -z "$GPG_KEY_ID" ]; then
+    if [ -z "${GPG_KEY_ID:-}" ]; then
         echo "Put GPG key id into GPG_KEY_ID env variable."
         exit 1
     fi
 
-    if [ -z "$GPG_PASSPHRASE" ]; then
+    if [ -z "${GPG_PASSPHRASE:-}" ]; then
         echo "Put GPG passphrase into GPG_PASSPHRASE env variable."
         exit 1
     fi
@@ -54,6 +54,7 @@ else
     unset GPG_OWNERTRUST
 
     ./gradlew --stacktrace --info build publishToSonatype -Psigning.keyId="$GPG_KEY_ID" -Psigning.password="$GPG_PASSPHRASE" -Psigning.secretKeyRingFile="$HOME/.gnupg/secring.gpg"
+    unset GPG_PASSPHRASE
 
     # Run closeAndReleaseRepository separately to avoid contention between publishing and closing.
     ./gradlew --stacktrace --info closeAndReleaseRepository

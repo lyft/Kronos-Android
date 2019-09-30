@@ -33,9 +33,11 @@ task validatePublishing {
     }
 }
 
-signing {
-    required { gradle.taskGraph.hasTask("publishToSonatype") }
-    sign configurations.archives
+afterEvaluate {
+    signing {
+        required { gradle.taskGraph.hasTask("publishToSonatype") }
+        sign publishing.publications.LibraryPublication
+    }
 }
 
 nexusPublishing {
