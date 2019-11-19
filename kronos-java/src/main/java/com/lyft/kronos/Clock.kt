@@ -62,7 +62,7 @@ interface KronosClock : Clock {
     fun syncInBackground()
 
     /**
-     * Shuts down the thread that performs syncing in the background. Any subsequent call to [currentTime]
+     * Shuts down the thread that performs syncing in the background. Any subsequent call to [getCurrentTime]
      * will throw [IllegalStateException]. You can call [shutdown] when you no longer need this service.
      */
     fun shutdown()
