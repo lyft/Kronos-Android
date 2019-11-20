@@ -7,7 +7,6 @@ import com.nhaarman.mockito_kotlin.*
 import org.assertj.core.api.Assertions.*
 import org.junit.Test
 import java.io.IOException
-import java.lang.IllegalArgumentException
 
 class SntpServiceTest {
     private val sntpService : SntpService
