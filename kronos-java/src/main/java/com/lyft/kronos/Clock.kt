@@ -40,9 +40,12 @@ interface KronosClock : Clock {
     }
 
     /**
+     * Unlike the [getCurrentTimeMs] method, synchronization is not started here.
+     * Outdated values are represented as null.
+     *
      * @return the current time in milliseconds, or null if no ntp sync has occurred.
      */
-    fun getCurrentNtpTimeMs(): Long?
+    fun getCachedNtpTimeMs(): Long?
 
     /**
      * @return [KronosTime] for the current time

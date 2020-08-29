@@ -62,7 +62,8 @@ class SntpServiceTest {
         verify(sntpClient, never()).requestTime(any(), any())
         assertThatExceptionOfType(IllegalStateException::class.java).isThrownBy { sntpService.sync() }
         assertThatExceptionOfType(IllegalStateException::class.java).isThrownBy { sntpService.syncInBackground() }
-        assertThatExceptionOfType(IllegalStateException::class.java).isThrownBy { sntpService.currentTimeMs() }
+        assertThatExceptionOfType(IllegalStateException::class.java).isThrownBy { sntpService.currentTime() }
+        assertThatExceptionOfType(IllegalStateException::class.java).isThrownBy { sntpService.cachedTime() }
     }
 
     @Test

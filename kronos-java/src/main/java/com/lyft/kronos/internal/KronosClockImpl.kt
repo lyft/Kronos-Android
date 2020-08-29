@@ -20,5 +20,5 @@ internal class KronosClockImpl(private val ntpService: SntpService, private val 
         return currentTime ?: KronosTime(posixTimeMs = fallbackClock.getCurrentTimeMs(), timeSinceLastNtpSyncMs = null)
     }
 
-    override fun getCurrentNtpTimeMs() : Long? = ntpService.currentTime()?.posixTimeMs
+    override fun getCachedNtpTimeMs() : Long? = ntpService.cachedTime()?.posixTimeMs
 }
