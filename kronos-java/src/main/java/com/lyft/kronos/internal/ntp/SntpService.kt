@@ -51,10 +51,11 @@ internal interface SntpService {
      *
      * Unlike the [currentTime], [syncInBackground] will not called.
      * Outdated values are represented as null.
+     * This method keep working after calling [shutdown].
      *
      * @return the current time, or null if NTP cannot be reached / hasn't synced
      */
-    fun cachedTime(): KronosTime?
+    fun cachedTime(): Long?
 }
 
 internal class SntpServiceImpl @JvmOverloads constructor(private val sntpClient: SntpClient,
@@ -110,16 +111,14 @@ internal class SntpServiceImpl @JvmOverloads constructor(private val sntpClient:
         return KronosTime(posixTimeMs = response.currentTimeMs, timeSinceLastNtpSyncMs = responseAge)
     }
 
-    override fun cachedTime(): KronosTime? {
-        ensureServiceIsRunning()
-
+    override fun cachedTime(): Long? {
         val response = response ?: return null
         val responseAge = response.responseAge
         if (responseAge >= cacheExpirationMs) {
             return null
         }
 
-        return KronosTime(posixTimeMs = response.currentTimeMs, timeSinceLastNtpSyncMs = responseAge)
+        return response.currentTimeMs
     }
 
     override fun syncInBackground() {

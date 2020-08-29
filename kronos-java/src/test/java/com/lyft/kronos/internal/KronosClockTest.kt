@@ -59,7 +59,7 @@ class KronosClockTest {
         assertThat(kronosClock.getCachedNtpTimeMs()).isNull()
         verify(ntpService).cachedTime()
 
-        whenever(ntpService.cachedTime()).thenReturn(KronosTime(1234L, 1234L))
+        whenever(ntpService.cachedTime()).thenReturn(1234L)
 
         assertThat(kronosClock.getCachedNtpTimeMs()).isEqualTo(1234L)
         verify(ntpService, times(2)).cachedTime()
