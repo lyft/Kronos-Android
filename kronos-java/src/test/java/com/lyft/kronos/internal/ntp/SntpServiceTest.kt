@@ -1,6 +1,7 @@
 package com.lyft.kronos.internal.ntp
 
 import com.lyft.kronos.Clock
+import com.lyft.kronos.DefaultParam.CACHE_EXPIRATION_MS
 import com.lyft.kronos.DefaultParam.TIMEOUT_MS
 import com.lyft.kronos.SyncListener
 import com.nhaarman.mockito_kotlin.*
@@ -72,5 +73,29 @@ class SntpServiceTest {
         assertThat(sntpService.sync()).isFalse()
 
         verify(sntpSyncListener, times(1)).onError(any(), any<IllegalStateException>())
+    }
+
+    @Test
+    fun outdatedCachedTimeShouldBeNull() {
+        val outdatedResponse = SntpClient.Response(System.currentTimeMillis(),
+                CACHE_EXPIRATION_MS * 2, 0, deviceClock)
+        val spyResponse = spy(outdatedResponse)
+        doReturn(true).whenever(spyResponse).isFromSameBoot
+        whenever(responseCache.get()).thenReturn(spyResponse)
+
+        assertThat(sntpService.cachedTime()).isNull()
+        verify(sntpClient, never()).requestTime(any(), any())
+    }
+
+    @Test
+    fun restoreCachedTimeWithoutUpdate() {
+        val outdatedResponse = SntpClient.Response(System.currentTimeMillis(),
+                System.currentTimeMillis() - CACHE_EXPIRATION_MS / 2, 0, deviceClock)
+        val spyResponse = spy(outdatedResponse)
+        doReturn(true).whenever(spyResponse).isFromSameBoot
+        whenever(responseCache.get()).thenReturn(spyResponse)
+
+        assertThat(sntpService.cachedTime()).isNotNull()
+        verify(sntpClient, never()).requestTime(any(), any())
     }
 }
