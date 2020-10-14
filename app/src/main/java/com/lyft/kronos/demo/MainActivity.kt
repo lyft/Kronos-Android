@@ -6,9 +6,9 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import android.provider.Settings
-import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.AppCompatImageButton
 import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.AppCompatImageButton
 import com.lyft.kronos.AndroidClockFactory
 
 class MainActivity : AppCompatActivity() {
@@ -23,9 +23,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun bindSettingsButton() {
-        findViewById<AppCompatImageButton>(R.id.settings_button).setOnClickListener({
+        findViewById<AppCompatImageButton>(R.id.settings_button).setOnClickListener {
             startActivity(Intent(Settings.ACTION_DATE_SETTINGS))
-        })
+        }
     }
 
     private fun bindDeviceClock() {

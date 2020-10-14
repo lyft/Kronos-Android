@@ -6,6 +6,7 @@ android:
     - android-15
     - android-17
     - android-27
+    - android-28
   licenses:
     - 'android-sdk-license-.+'
 
