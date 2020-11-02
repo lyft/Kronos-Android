@@ -4,7 +4,6 @@ apply from: "$rootDir/gradle/publish-java.gradle"
 
 dependencies {
     api "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    implementation "com.android.support:support-annotations:$support_lib_version"
 
     testImplementation 'junit:junit:4.12'
     testImplementation "com.nhaarman:mockito-kotlin:1.6.0"
