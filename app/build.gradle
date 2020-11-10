@@ -21,8 +21,6 @@ android {
 
 dependencies {
     implementation project(':kronos-android')
-    implementation "com.android.support:appcompat-v7:$support_lib_version"
-    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     testImplementation 'junit:junit:4.12'
 }

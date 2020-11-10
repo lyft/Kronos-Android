@@ -3,13 +3,14 @@ package com.lyft.kronos.demo
 import android.content.Context
 import android.os.SystemClock
 import android.util.AttributeSet
+import android.widget.TextView
 import com.lyft.kronos.Clock
 import com.lyft.kronos.AndroidClockFactory
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-class TextClock : android.support.v7.widget.AppCompatTextView {
+class TextClock : TextView {
 
     var clock : Clock = AndroidClockFactory.createDeviceClock()
 

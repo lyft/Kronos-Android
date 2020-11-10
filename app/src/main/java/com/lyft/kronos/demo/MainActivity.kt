@@ -1,17 +1,17 @@
 package com.lyft.kronos.demo
 
+import android.app.Activity
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import android.provider.Settings
-import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.AppCompatImageButton
 import android.util.Log
+import android.widget.ImageButton
 import com.lyft.kronos.AndroidClockFactory
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,9 +23,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun bindSettingsButton() {
-        findViewById<AppCompatImageButton>(R.id.settings_button).setOnClickListener({
+        findViewById<ImageButton>(R.id.settings_button).setOnClickListener {
             startActivity(Intent(Settings.ACTION_DATE_SETTINGS))
-        })
+        }
     }
 
     private fun bindDeviceClock() {
