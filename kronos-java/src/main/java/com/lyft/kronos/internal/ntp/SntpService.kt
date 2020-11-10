@@ -1,6 +1,5 @@
 package com.lyft.kronos.internal.ntp
 
-import android.support.annotation.WorkerThread
 import com.lyft.kronos.Clock
 import com.lyft.kronos.DefaultParam.CACHE_EXPIRATION_MS
 import com.lyft.kronos.DefaultParam.MIN_WAIT_TIME_BETWEEN_SYNC_MS
@@ -143,7 +142,6 @@ internal class SntpServiceImpl @JvmOverloads constructor(private val sntpClient:
         }
     }
 
-    @WorkerThread
     private fun sync(host: String): Boolean {
         if (state.getAndSet(State.SYNCING) != State.SYNCING) {
             val t1 = deviceClock.getElapsedTimeMs()
