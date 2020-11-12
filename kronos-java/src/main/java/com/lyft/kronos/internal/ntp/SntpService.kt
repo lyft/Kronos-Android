@@ -14,22 +14,6 @@ import java.util.concurrent.atomic.AtomicReference
 internal interface SntpService {
 
     /**
-     * Return the current time in millisecond.
-     *
-     * If NTP server cannot be reached or if it hasn't yet synced up to the NTP server,
-     * it will return [Constants.TIME_UNAVAILABLE] instead.
-     *
-     * Note calling this method will trigger [syncInBackground] being called when necessary.
-     * You should still call [sync]/[syncInBackground] once to ensure you have the correct
-     * as soon as possible. By default [sync] will be triggered at most once a minute.
-     *
-     * @return the current time in milliseconds.
-     */
-    fun currentTimeMs(): Long {
-        return this.currentTime()?.posixTimeMs ?: Constants.TIME_UNAVAILABLE
-    }
-
-    /**
      * Calls [sync] in a background thread. This method returns immediately.
      */
     fun syncInBackground()
@@ -51,11 +35,26 @@ internal interface SntpService {
     fun shutdown()
 
     /**
-     * Same as currentTimeMs(), but returned object includes time since last ntp sync.
+     * Returned object includes time since last ntp sync.
+     *
+     * Note calling this method will trigger [syncInBackground] being called when necessary.
+     * You should still call [sync]/[syncInBackground] once to ensure you have the correct
+     * as soon as possible. By default [sync] will be triggered at most once a minute.
      *
      * @return the current time, or null if NTP cannot be reached / hasn't synced
      */
     fun currentTime(): KronosTime?
+
+    /**
+     * Returned object includes time since last ntp sync.
+     *
+     * Unlike the [currentTime], [syncInBackground] will not called.
+     * Outdated values are represented as null.
+     * This method keep working after calling [shutdown].
+     *
+     * @return the current time, or null if NTP cannot be reached / hasn't synced
+     */
+    fun cachedTime(): Long?
 }
 
 internal class SntpServiceImpl @JvmOverloads constructor(private val sntpClient: SntpClient,
@@ -109,6 +108,16 @@ internal class SntpServiceImpl @JvmOverloads constructor(private val sntpClient:
         }
 
         return KronosTime(posixTimeMs = response.currentTimeMs, timeSinceLastNtpSyncMs = responseAge)
+    }
+
+    override fun cachedTime(): Long? {
+        val response = response ?: return null
+        val responseAge = response.responseAge
+        if (responseAge >= cacheExpirationMs) {
+            return null
+        }
+
+        return response.currentTimeMs
     }
 
     override fun syncInBackground() {

@@ -9,6 +9,7 @@ import com.nhaarman.mockito_kotlin.whenever
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.mockito.Mockito.never
+import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 
 class KronosClockTest {
@@ -49,5 +50,18 @@ class KronosClockTest {
 
         assertThat(kronosClock.getElapsedTimeMs()).isEqualTo(1234L)
         verify(deviceClock).getElapsedTimeMs()
+    }
+
+    @Test
+    fun `cachedNtpTimeMs should always delegate`() {
+        whenever(ntpService.cachedTime()).thenReturn(null)
+
+        assertThat(kronosClock.getCachedNtpTimeMs()).isNull()
+        verify(ntpService).cachedTime()
+
+        whenever(ntpService.cachedTime()).thenReturn(1234L)
+
+        assertThat(kronosClock.getCachedNtpTimeMs()).isEqualTo(1234L)
+        verify(ntpService, times(2)).cachedTime()
     }
 }
