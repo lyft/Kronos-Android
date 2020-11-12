@@ -69,8 +69,10 @@ class SntpServiceTest {
         whenever(sntpClient.requestTime("1.us.pool.ntp.org", TIMEOUT_MS)).thenReturn(mockResponse)
         whenever(sntpClient.requestTime("2.us.pool.ntp.org", TIMEOUT_MS)).thenReturn(mockResponse)
         whenever(mockResponse.currentTimeMs).thenReturn(-1)
+
         assertThat(sntpService.sync()).isFalse()
 
-        verify(sntpSyncListener, times(1)).onError(any(), any<IllegalStateException>())
+        verify(sntpSyncListener, times(1)).onError(eq("1.us.pool.ntp.org"), any<NTPSyncException>())
+        verify(sntpSyncListener, times(1)).onError(eq("2.us.pool.ntp.org"), any<NTPSyncException>())
     }
 }
