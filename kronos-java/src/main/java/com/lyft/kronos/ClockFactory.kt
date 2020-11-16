@@ -1,6 +1,7 @@
 package com.lyft.kronos
 
 import com.lyft.kronos.DefaultParam.CACHE_EXPIRATION_MS
+import com.lyft.kronos.DefaultParam.MAX_NTP_RESPONSE_TIME_MS
 import com.lyft.kronos.DefaultParam.MIN_WAIT_TIME_BETWEEN_SYNC_MS
 import com.lyft.kronos.DefaultParam.NTP_HOSTS
 import com.lyft.kronos.DefaultParam.TIMEOUT_MS
@@ -21,6 +22,7 @@ object ClockFactory {
      * @param requestTimeoutMs Lengthen or shorten the timeout value. If the NTP server fails to respond within the given time, the next server will be contacted. If none of the server respond within the given time, the sync operation will be considered a failure.
      * @param minWaitTimeBetweenSyncMs Kronos attempts a synchronization at most once a minute. If you want to change the frequency, supply the desired time in milliseconds. Note that you should also supply a cacheExpirationMs value. For example, if you shorten the minWaitTimeBetweenSyncMs to 30 seconds, but leave the cacheExpirationMs to 1 minute, it will have no affect because the cache is still valid within the 1 minute window.
      * @param cacheExpirationMs Kronos will perform a background sync if the cache is stale. The cache is valid for 1 minute by default. It is simpliest to keep the cacheExpirationMs value the same as minWaitTimeBetweenSyncMs value.
+     * @param maxNtpResponseTimeMs Kronos will consider a sync successful only if the NTP server response within the given time.
      *
      */
     @JvmStatic
@@ -31,7 +33,8 @@ object ClockFactory {
                           ntpHosts: List<String> = NTP_HOSTS,
                           requestTimeoutMs: Long = TIMEOUT_MS,
                           minWaitTimeBetweenSyncMs: Long = MIN_WAIT_TIME_BETWEEN_SYNC_MS,
-                          cacheExpirationMs: Long = CACHE_EXPIRATION_MS): KronosClock {
+                          cacheExpirationMs: Long = CACHE_EXPIRATION_MS,
+                          maxNtpResponseTimeMs: Long = MAX_NTP_RESPONSE_TIME_MS): KronosClock {
 
         if (localClock is KronosClock) {
             throw IllegalArgumentException("Local clock should implement Clock instead of KronosClock")
@@ -39,7 +42,16 @@ object ClockFactory {
 
         val sntpClient = SntpClient(localClock, DnsResolverImpl(), DatagramFactoryImpl())
         val cache = SntpResponseCacheImpl(syncResponseCache, localClock)
-        val ntpService = SntpServiceImpl(sntpClient, localClock, cache, syncListener, ntpHosts, requestTimeoutMs, minWaitTimeBetweenSyncMs, cacheExpirationMs)
+        val ntpService = SntpServiceImpl(
+                sntpClient,
+                localClock,
+                cache,
+                syncListener,
+                ntpHosts,
+                requestTimeoutMs,
+                minWaitTimeBetweenSyncMs,
+                cacheExpirationMs,
+                maxNtpResponseTimeMs)
         return KronosClockImpl(ntpService, localClock)
     }
 }
