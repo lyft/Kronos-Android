@@ -9,4 +9,5 @@ object DefaultParam {
     // Sync with NTP only after MIN_WAIT_TIME_BETWEEN_SYNC_MS regardless of success or failure
     val MIN_WAIT_TIME_BETWEEN_SYNC_MS = TimeUnit.MINUTES.toMillis(1)
     val TIMEOUT_MS = TimeUnit.SECONDS.toMillis(6)
+    val MAX_NTP_RESPONSE_TIME_MS = TimeUnit.SECONDS.toMillis(5)
 }

@@ -2,6 +2,7 @@ package com.lyft.kronos.internal.ntp
 
 import com.lyft.kronos.Clock
 import com.lyft.kronos.DefaultParam.CACHE_EXPIRATION_MS
+import com.lyft.kronos.DefaultParam.MAX_NTP_RESPONSE_TIME_MS
 import com.lyft.kronos.DefaultParam.MIN_WAIT_TIME_BETWEEN_SYNC_MS
 import com.lyft.kronos.DefaultParam.TIMEOUT_MS
 import com.lyft.kronos.KronosTime
@@ -65,7 +66,8 @@ internal class SntpServiceImpl @JvmOverloads constructor(private val sntpClient:
                                                          private val ntpHosts: List<String>,
                                                          private val requestTimeoutMs: Long = TIMEOUT_MS,
                                                          private val minWaitTimeBetweenSyncMs: Long = MIN_WAIT_TIME_BETWEEN_SYNC_MS,
-                                                         private val cacheExpirationMs: Long = CACHE_EXPIRATION_MS) : SntpService {
+                                                         private val cacheExpirationMs: Long = CACHE_EXPIRATION_MS,
+                                                         private val maxNtpResponseTimeMs: Long = MAX_NTP_RESPONSE_TIME_MS) : SntpService {
 
     private val state = AtomicReference(State.INIT)
     private val cachedSyncTime = AtomicLong(0)
@@ -151,11 +153,15 @@ internal class SntpServiceImpl @JvmOverloads constructor(private val sntpClient:
                 if (response.currentTimeMs < 0) {
                     throw NTPSyncException("Invalid time ${response.currentTimeMs} received from $host")
                 }
+                val responseTime = deviceClock.getElapsedTimeMs() - t1
+                if (responseTime > maxNtpResponseTimeMs) {
+                    throw NTPSyncException("Ignoring response from $host because the network latency ($responseTime ms) is longer than the required value ($maxNtpResponseTimeMs ms")
+                }
                 responseCache.update(response)
                 val cachedOffset = response.offsetMs
-                val responseTime = deviceClock.getElapsedTimeMs() - t1
                 ntpSyncListener?.onSuccess(cachedOffset, responseTime)
                 return true
+
             } catch (e: Throwable) {
                 ntpSyncListener?.onError(host, e)
             } finally {

@@ -1,6 +1,7 @@
 package com.lyft.kronos.internal.ntp
 
 import com.lyft.kronos.Clock
+import com.lyft.kronos.DefaultParam.MAX_NTP_RESPONSE_TIME_MS
 import com.lyft.kronos.DefaultParam.TIMEOUT_MS
 import com.lyft.kronos.SyncListener
 import com.nhaarman.mockito_kotlin.*
@@ -36,7 +37,7 @@ class SntpServiceTest {
         verify(sntpSyncListener, times(1)).onError("0.us.pool.ntp.org", mockError)
 
         whenever(sntpClient.requestTime(any(), any())).thenReturn(mockResponse)
-        assertThat(sntpService.sync()).isTrue()
+        assertThat(sntpService.sync()).isTrue
 
         verify(sntpSyncListener, times(2)).onStartSync("2.us.pool.ntp.org")
         verify(sntpSyncListener, times(1)).onSuccess(any(), any())
@@ -47,10 +48,28 @@ class SntpServiceTest {
         val mockError = mock<IOException>()
         whenever(sntpClient.requestTime("2.us.pool.ntp.org", TIMEOUT_MS)).thenThrow(mockError)
         whenever(sntpClient.requestTime("1.us.pool.ntp.org", TIMEOUT_MS)).thenReturn(mockResponse)
-        assertThat(sntpService.sync()).isTrue()
+        assertThat(sntpService.sync()).isTrue
 
         verify(sntpSyncListener, times(1)).onStartSync("2.us.pool.ntp.org")
         verify(sntpSyncListener, times(1)).onError("2.us.pool.ntp.org", mockError)
+        verify(sntpSyncListener, times(1)).onStartSync("1.us.pool.ntp.org")
+        verify(sntpSyncListener, times(1)).onSuccess(any(), any())
+    }
+
+    @Test
+    fun testFirstResponseTimeTooSlow() {
+        val now = System.currentTimeMillis()
+        whenever(deviceClock.getElapsedTimeMs())
+                .thenReturn(now) //first request time
+                .thenReturn(now + MAX_NTP_RESPONSE_TIME_MS + 1) //first response time
+                .thenReturn(now + MAX_NTP_RESPONSE_TIME_MS + 10) //second request time
+                .thenReturn(now + MAX_NTP_RESPONSE_TIME_MS + 50) //second response time
+        whenever(sntpClient.requestTime("2.us.pool.ntp.org", TIMEOUT_MS)).thenReturn(mockResponse)
+        whenever(sntpClient.requestTime("1.us.pool.ntp.org", TIMEOUT_MS)).thenReturn(mockResponse)
+        assertThat(sntpService.sync()).isTrue
+
+        verify(sntpSyncListener, times(1)).onStartSync("2.us.pool.ntp.org")
+        verify(sntpSyncListener, times(1)).onError(eq("2.us.pool.ntp.org"), any<NTPSyncException>())
         verify(sntpSyncListener, times(1)).onStartSync("1.us.pool.ntp.org")
         verify(sntpSyncListener, times(1)).onSuccess(any(), any())
     }
@@ -70,7 +89,7 @@ class SntpServiceTest {
         whenever(sntpClient.requestTime("2.us.pool.ntp.org", TIMEOUT_MS)).thenReturn(mockResponse)
         whenever(mockResponse.currentTimeMs).thenReturn(-1)
 
-        assertThat(sntpService.sync()).isFalse()
+        assertThat(sntpService.sync()).isFalse
 
         verify(sntpSyncListener, times(1)).onError(eq("1.us.pool.ntp.org"), any<NTPSyncException>())
         verify(sntpSyncListener, times(1)).onError(eq("2.us.pool.ntp.org"), any<NTPSyncException>())
