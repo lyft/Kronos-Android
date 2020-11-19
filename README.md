@@ -57,7 +57,7 @@ Kronos comes with a set of reasonable default configurations. You can customize 
 * `syncListener` 
     * Allows you to log sync operation successes and errors, which maybe useful for custom analytics. Pass an implementation of `SyncListener`.
 * `ntpHosts`
-    * Specify a list of NTP servers with which to sync.
+    * Specify a list of NTP servers with which to sync. Default servers are set to [the NTP pool](https://www.ntppool.org/en/use.html).
 * `requestTimeoutMs`
     * Lengthen or shorten the timeout value. If the NTP server fails to respond within the given time, the next server will be contacted. If none of the server respond within the given time, the sync operation will be considered a failure.
 * `minWaitTimeBetweenSyncMs`
