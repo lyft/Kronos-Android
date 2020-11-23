@@ -69,14 +69,14 @@ internal class SntpServiceImpl @JvmOverloads constructor(private val sntpClient:
                                                          private val cacheExpirationMs: Long = CACHE_EXPIRATION_MS,
                                                          private val maxNtpResponseTimeMs: Long = MAX_NTP_RESPONSE_TIME_MS) : SntpService {
 
-    private val state = AtomicReference(State.INIT)
+    private val state = AtomicReference(State.IDLE)
     private val cachedSyncTime = AtomicLong(0)
     private val executor = Executors.newSingleThreadExecutor { Thread(it, "kronos-android") }
 
     private val response: SntpClient.Response?
         get() {
             val response = responseCache.get()
-            val isCachedFromPreviousBoot = state.compareAndSet(State.INIT, State.IDLE) && response != null && !response.isFromSameBoot
+            val isCachedFromPreviousBoot = state.get() == State.IDLE && response != null && !response.isFromSameBoot
             return if (isCachedFromPreviousBoot) {
                 responseCache.clear()
                 null
@@ -89,7 +89,6 @@ internal class SntpServiceImpl @JvmOverloads constructor(private val sntpClient:
         get() = deviceClock.getElapsedTimeMs() - cachedSyncTime.get()
 
     private enum class State {
-        INIT,
         IDLE,
         SYNCING,
         STOPPED

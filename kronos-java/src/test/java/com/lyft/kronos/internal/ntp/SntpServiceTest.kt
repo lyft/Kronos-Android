@@ -94,4 +94,19 @@ class SntpServiceTest {
         verify(sntpSyncListener, times(1)).onError(eq("1.fake.pool.ntp.org"), any<NTPSyncException>())
         verify(sntpSyncListener, times(1)).onError(eq("2.fake.pool.ntp.org"), any<NTPSyncException>())
     }
+
+    @Test
+    fun shouldClearCacheWhenSyncFailsAndGettingCurrentTime() {
+        whenever(sntpClient.requestTime("1.fake.pool.ntp.org", TIMEOUT_MS)).thenReturn(mockResponse)
+        whenever(sntpClient.requestTime("2.fake.pool.ntp.org", TIMEOUT_MS)).thenReturn(mockResponse)
+        whenever(mockResponse.currentTimeMs).thenReturn(-1)
+        whenever(mockResponse.isFromSameBoot).thenReturn(false)
+        whenever(responseCache.get()).thenReturn(mockResponse)
+
+        assertThat(sntpService.sync()).isFalse
+
+        sntpService.currentTime()
+
+        verify(responseCache, times(1)).clear()
+    }
 }
