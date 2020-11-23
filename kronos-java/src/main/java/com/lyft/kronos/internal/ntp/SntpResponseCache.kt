@@ -13,7 +13,10 @@ internal interface SntpResponseCache {
     fun clear()
 }
 
-internal class SntpResponseCacheImpl(private val syncResponseCache: SyncResponseCache, private val deviceClock: Clock) : SntpResponseCache {
+internal class SntpResponseCacheImpl(
+    private val syncResponseCache: SyncResponseCache,
+    private val deviceClock: Clock,
+) : SntpResponseCache {
 
     override fun get(): SntpClient.Response? {
         val currentTime = syncResponseCache.currentTime
@@ -26,12 +29,16 @@ internal class SntpResponseCacheImpl(private val syncResponseCache: SyncResponse
     }
 
     override fun update(response: SntpClient.Response) {
-        syncResponseCache.currentTime = response.deviceCurrentTimestampMs
-        syncResponseCache.elapsedTime = response.deviceElapsedTimestampMs
-        syncResponseCache.currentOffset = response.offsetMs
+        synchronized(this) {
+            syncResponseCache.currentTime = response.deviceCurrentTimestampMs
+            syncResponseCache.elapsedTime = response.deviceElapsedTimestampMs
+            syncResponseCache.currentOffset = response.offsetMs
+        }
     }
 
     override fun clear() {
-        syncResponseCache.clear()
+        synchronized(this) {
+            syncResponseCache.clear()
+        }
     }
 }
