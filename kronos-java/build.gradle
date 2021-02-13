@@ -10,4 +10,6 @@ dependencies {
     testImplementation "org.mockito:mockito-core:3.6.0"
     testImplementation "org.mockito:mockito-inline:3.6.0"
     testImplementation "org.assertj:assertj-core:3.18.1"
+
+    testImplementation("com.squareup.okio:okio:2.10.0")
 }
