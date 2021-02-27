@@ -5,8 +5,13 @@ import java.nio.ByteBuffer
 internal interface NtpPackets {
 
     fun decode(packetBuffer: ByteBuffer): NtpPacket
+    fun encode(packet: NtpPacket): ByteBuffer
 
     class Impl : NtpPackets {
+
+        companion object {
+            private const val NTP_PACKET_SIZE_BYTES = 48
+        }
 
         // Source of truth (SNTP 4): https://tools.ietf.org/html/rfc4330
 
@@ -17,42 +22,46 @@ internal interface NtpPackets {
             stratum = packetBuffer.get(1),
             maximumPollIntervalPowerOfTwo = packetBuffer.get(2),
             precisionPowerOfTwo = packetBuffer.get(3),
-            rootDelaySeconds = packetBuffer.intervalSeconds(4),
-            rootDispersionSeconds = packetBuffer.intervalSeconds(8),
-            referenceTimeSecondsSince1900 = packetBuffer.timeSeconds(16),
-            originateTimeSecondsSince1900 = packetBuffer.timeSeconds(24),
-            receiveTimeSecondsSince1900 = packetBuffer.timeSeconds(32),
-            transmitTimeSecondsSince1900 = packetBuffer.timeSeconds(40),
+            rootDelaySeconds = packetBuffer.getIntervalSeconds(4),
+            rootDispersionSeconds = packetBuffer.getIntervalSeconds(8),
+            referenceTimeSecondsSince1900 = packetBuffer.getTimeSeconds(16),
+            originateTimeSecondsSince1900 = packetBuffer.getTimeSeconds(24),
+            receiveTimeSecondsSince1900 = packetBuffer.getTimeSeconds(32),
+            transmitTimeSecondsSince1900 = packetBuffer.getTimeSeconds(40),
         )
 
-        private fun ByteBuffer.intervalSeconds(position: Int): Double {
+        private fun ByteBuffer.getIntervalSeconds(position: Int): Double {
             val integer = getUInt16(position)
             val decimal = getUInt16Decimal(position + 2)
 
             return integer + decimal
         }
 
-        private fun ByteBuffer.timeSeconds(position: Int): Double {
+        private fun ByteBuffer.getTimeSeconds(position: Int): Double {
             val seconds = getUInt32(position)
             val secondsFraction = getUInt32Decimal(position + 4)
 
             return seconds + secondsFraction
         }
 
-        private fun ByteBuffer.getUInt16(position: Int): Int = this
-            .getShort(position)
-            .toInt()
-            .and(0xffff)
+        override fun encode(packet: NtpPacket) = ByteBuffer.allocate(NTP_PACKET_SIZE_BYTES)
+            .put(0, packet.warningLeapSecond.toInt().shl(6).or(packet.protocolVersion.toInt().shl(3)).or(packet.protocolMode.toInt()).toByte())
+            .put(1, packet.stratum)
+            .put(2, packet.maximumPollIntervalPowerOfTwo)
+            .put(3, packet.precisionPowerOfTwo)
+            .putIntervalSeconds(4, packet.rootDelaySeconds)
+            .putIntervalSeconds(8, packet.rootDispersionSeconds)
+            .putTimeSeconds(16, packet.referenceTimeSecondsSince1900)
+            .putTimeSeconds(24, packet.originateTimeSecondsSince1900)
+            .putTimeSeconds(32, packet.receiveTimeSecondsSince1900)
+            .putTimeSeconds(40, packet.transmitTimeSecondsSince1900)
 
-        private fun ByteBuffer.getUInt16Decimal(position: Int): Double = getUInt16(position)
-            .toDouble() / (0xffff + 1)
+        private fun ByteBuffer.putIntervalSeconds(position: Int, seconds: Double) = this
+            .putUInt16(position, seconds.toInt())
+            .putUInt16Decimal(position + 2, seconds - seconds.toInt())
 
-        private fun ByteBuffer.getUInt32(position: Int): Long = this
-            .getInt(position)
-            .toLong()
-            .and(0xffffffff)
-
-        private fun ByteBuffer.getUInt32Decimal(position: Int): Double = getUInt32(position)
-            .toDouble() / (0xffffffff + 1)
+        private fun ByteBuffer.putTimeSeconds(position: Int, seconds: Double) = this
+            .putUInt32(position, seconds.toLong())
+            .putUInt32Decimal(position + 4, seconds - seconds.toLong())
     }
 }

@@ -1,14 +1,13 @@
 package com.lyft.kronos.ntp
 
 import okio.ByteString.Companion.decodeHex
+import okio.ByteString.Companion.toByteString
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
 class NtpPacketsTests {
 
     private val packets by lazy { NtpPackets.Impl() }
-
-    // Decode
 
     // Use following commands to produce independent package picture.
     //
@@ -17,6 +16,8 @@ class NtpPacketsTests {
     //
     // tcpdump will output both raw hex package (last 24 hex blocks are 48 NTP bytes)
     // and resolved NTP properties. This information can be used to produce good test data.
+
+    // Decode
 
     @Test
     fun decodeApple() {
@@ -116,5 +117,107 @@ class NtpPacketsTests {
 
     private fun assertDecode(packetHex: String, packet: NtpPacket) {
         assertThat(packets.decode(packetHex.decodeHex().asByteBuffer())).isEqualTo(packet)
+    }
+
+    // Encode
+
+    @Test
+    fun encodeApple() {
+        // time.apple.com
+
+        val packet = NtpPacket(
+            warningLeapSecond = 3,
+            protocolVersion = 4,
+            protocolMode = 3,
+            stratum = 0,
+            maximumPollIntervalPowerOfTwo = 8,
+            precisionPowerOfTwo = 0,
+            rootDelaySeconds = 0.0,
+            rootDispersionSeconds = 0.0,
+            referenceTimeSecondsSince1900 = 0.0,
+            originateTimeSecondsSince1900 = 0.0,
+            receiveTimeSecondsSince1900 = 0.0,
+            transmitTimeSecondsSince1900 = 3822666353.398732000,
+        )
+
+        val packetHex = "e3000800000000000000000000000000000000000000000000000000000000000000000000000000e3d9427166135000"
+
+        assertEncode(packetHex, packet)
+    }
+
+    @Test
+    fun encodeAppleEuro() {
+        // time.euro.apple.com
+
+        val packet = NtpPacket(
+            warningLeapSecond = 3,
+            protocolVersion = 4,
+            protocolMode = 3,
+            stratum = 0,
+            maximumPollIntervalPowerOfTwo = 8,
+            precisionPowerOfTwo = 0,
+            rootDelaySeconds = 0.0,
+            rootDispersionSeconds = 0.0,
+            referenceTimeSecondsSince1900 = 0.0,
+            originateTimeSecondsSince1900 = 0.0,
+            receiveTimeSecondsSince1900 = 0.0,
+            transmitTimeSecondsSince1900 = 3822666760.277606999,
+        )
+
+        val packetHex = "e3000800000000000000000000000000000000000000000000000000000000000000000000000000e3d9440847114000"
+
+        assertEncode(packetHex, packet)
+    }
+
+    @Test
+    fun encodeGoogle() {
+        // time.google.com
+
+        val packet = NtpPacket(
+            warningLeapSecond = 3,
+            protocolVersion = 4,
+            protocolMode = 3,
+            stratum = 0,
+            maximumPollIntervalPowerOfTwo = 8,
+            precisionPowerOfTwo = 0,
+            rootDelaySeconds = 0.0,
+            rootDispersionSeconds = 0.0,
+            referenceTimeSecondsSince1900 = 0.0,
+            originateTimeSecondsSince1900 = 0.0,
+            receiveTimeSecondsSince1900 = 0.0,
+            transmitTimeSecondsSince1900 = 3822666850.665352999,
+        )
+
+        val packetHex = "e3000800000000000000000000000000000000000000000000000000000000000000000000000000e3d94462aa549000"
+
+        assertEncode(packetHex, packet)
+    }
+
+    @Test
+    fun encodePool() {
+        // pool.ntp.org
+
+        val packet = NtpPacket(
+            warningLeapSecond = 3,
+            protocolVersion = 4,
+            protocolMode = 3,
+            stratum = 0,
+            maximumPollIntervalPowerOfTwo = 8,
+            precisionPowerOfTwo = 0,
+            rootDelaySeconds = 0.0,
+            rootDispersionSeconds = 0.0,
+            referenceTimeSecondsSince1900 = 0.0,
+            originateTimeSecondsSince1900 = 0.0,
+            receiveTimeSecondsSince1900 = 0.0,
+            transmitTimeSecondsSince1900 = 3822666922.660100999,
+        )
+
+        val packetHex = "e3000800000000000000000000000000000000000000000000000000000000000000000000000000e3d944aaa8fc6000"
+
+        assertEncode(packetHex, packet)
+    }
+
+    private fun assertEncode(packetHex: String, packet: NtpPacket) {
+        assertThat(packets.encode(packet).toByteString().hex()).isEqualTo(packetHex)
     }
 }
