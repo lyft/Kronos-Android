@@ -1,11 +1,15 @@
 package com.lyft.kronos.internal.ntp;
 
 import com.lyft.kronos.Clock;
+import com.lyft.kronos.ntp.NtpPacket;
+import com.lyft.kronos.ntp.NtpPackets;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.util.Arrays;
+import java.nio.ByteBuffer;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Forked from https://android.googlesource.com/platform/frameworks/base/+/master/core/java/android/net/SntpClient.java
@@ -36,16 +40,11 @@ import java.util.Arrays;
  */
 public class SntpClient {
 
-    private static final int ORIGINATE_TIME_OFFSET = 24;
-    private static final int RECEIVE_TIME_OFFSET = 32;
-    private static final int TRANSMIT_TIME_OFFSET = 40;
     private static final int NTP_PACKET_SIZE = 48;
 
     private static final int NTP_PORT = 123;
-    private static final int NTP_MODE_CLIENT = 3;
     private static final int NTP_MODE_SERVER = 4;
     private static final int NTP_MODE_BROADCAST = 5;
-    private static final int NTP_VERSION = 3;
 
     private static final int NTP_LEAP_NOSYNC = 3;
     private static final int NTP_STRATUM_DEATH = 0;
@@ -53,7 +52,7 @@ public class SntpClient {
 
     // Number of seconds between Jan 1, 1900 and Jan 1, 1970
     // 70 years plus 17 leap days
-    private static final long OFFSET_1900_TO_1970 = ((365L * 70L) + 17L) * 24L * 60L * 60L;
+    public static final long OFFSET_1900_TO_1970 = ((365L * 70L) + 17L) * 24L * 60L * 60L;
 
     private static final long MAX_BOOT_MISMATCH_MS = 1_000L;
 
@@ -73,6 +72,8 @@ public class SntpClient {
         this.datagramFactory = datagramFactory;
     }
 
+    private final NtpPackets ntpPackets = new NtpPackets.Impl();
+
     /**
      * Sends an SNTP request to the given host and processes the response.
      *
@@ -87,34 +88,47 @@ public class SntpClient {
             InetAddress address = dnsResolver.resolve(host);
             socket = datagramFactory.createSocket();
             socket.setSoTimeout(timeout.intValue());
-            byte[] requestBuffer = new byte[NTP_PACKET_SIZE];
-            DatagramPacket request = datagramFactory.createPacket(requestBuffer, address, NTP_PORT);
-
-            // set mode = 3 (client) and version = 3
-            // mode is in low 3 bits of first byte
-            // version is in bits 3-5 of first byte
-            requestBuffer[0] = NTP_MODE_CLIENT | (NTP_VERSION << 3);
 
             // get current time and write it to the request packet
             long requestTime = deviceClock.getCurrentTimeMs();
             long requestTicks = deviceClock.getElapsedTimeMs();
-            writeTimeStamp(requestBuffer, TRANSMIT_TIME_OFFSET, requestTime);
-            socket.send(request);
+
+            NtpPacket requestNtpPacket = new NtpPacket(
+                    /* leap */ (byte) 0,
+                    /* version */ (byte) 3,
+                    /* mode */ (byte) NtpPacket.ProtocolMode.Client.getValue(),
+                    /* stratum */ (byte) 0,
+                    /* poll interval */ (byte) 0,
+                    /* precision */ (byte) 0,
+                    /* root delay */ 0.0,
+                    /* root dispersion */ 0.0,
+                    /* reference time */ 0.0,
+                    /* originate time */ 0.0,
+                    /* receive time */ 0.0,
+                    /* transmit time */ (double) (TimeUnit.MILLISECONDS.toSeconds(requestTime) + OFFSET_1900_TO_1970)
+            );
+            ByteBuffer requestByteBuffer = ntpPackets.encode(requestNtpPacket);
+            DatagramPacket requestPacket = datagramFactory.createPacket(requestByteBuffer.array(), address, NTP_PORT);
+
+            socket.send(requestPacket);
 
             // read the response
-            byte[] responseBuffer = Arrays.copyOf(requestBuffer, requestBuffer.length);
-            DatagramPacket response = datagramFactory.createPacket(responseBuffer);
-            socket.receive(response);
+            ByteBuffer responseByteBuffer = ByteBuffer.allocate(NTP_PACKET_SIZE);
+            DatagramPacket responsePacket = datagramFactory.createPacket(responseByteBuffer.array());
+            socket.receive(responsePacket);
+
             long responseTicks = deviceClock.getElapsedTimeMs();
             long responseTime = requestTime + (responseTicks - requestTicks);
 
+            NtpPacket responseNtpPacket = ntpPackets.decode(responseByteBuffer);
+
             // extract the results
-            final byte leap = (byte) ((responseBuffer[0] >> 6) & 0x3);
-            final byte mode = (byte) (responseBuffer[0] & 0x7);
-            final int stratum = (int) (responseBuffer[1] & 0xff);
-            final long originateTime = readTimeStamp(responseBuffer, ORIGINATE_TIME_OFFSET);
-            final long receiveTime = readTimeStamp(responseBuffer, RECEIVE_TIME_OFFSET);
-            final long transmitTime = readTimeStamp(responseBuffer, TRANSMIT_TIME_OFFSET);
+            final byte leap = responseNtpPacket.getWarningLeapSecond();
+            final byte mode = responseNtpPacket.getProtocolMode();
+            final int stratum = responseNtpPacket.getStratum();
+            final long originateTime = TimeUnit.SECONDS.toMillis((long) responseNtpPacket.getOriginateTimeSecondsSince1900() - OFFSET_1900_TO_1970);
+            final long receiveTime =  TimeUnit.SECONDS.toMillis((long) responseNtpPacket.getReceiveTimeSecondsSince1900() - OFFSET_1900_TO_1970);
+            final long transmitTime = TimeUnit.SECONDS.toMillis((long) responseNtpPacket.getTransmitTimeSecondsSince1900() - OFFSET_1900_TO_1970);
 
             checkValidServerReply(leap, mode, stratum, transmitTime);
 
@@ -182,30 +196,6 @@ public class SntpClient {
         long seconds = read32(buffer, offset);
         long fraction = read32(buffer, offset + 4);
         return ((seconds - OFFSET_1900_TO_1970) * 1000) + ((fraction * 1000L) / 0x100000000L);
-    }
-
-    /**
-     * Writes system time (milliseconds since January 1, 1970) as an NTP time stamp
-     * at the given offsetMs in the buffer.
-     */
-    private static void writeTimeStamp(byte[] buffer, int offset, long time) {
-        long seconds = time / 1000L;
-        long milliseconds = time - seconds * 1000L;
-        seconds += OFFSET_1900_TO_1970;
-
-        // write seconds in big endian format
-        buffer[offset++] = (byte) (seconds >> 24);
-        buffer[offset++] = (byte) (seconds >> 16);
-        buffer[offset++] = (byte) (seconds >> 8);
-        buffer[offset++] = (byte) (seconds >> 0);
-
-        long fraction = milliseconds * 0x100000000L / 1000L;
-        // write fraction in big endian format
-        buffer[offset++] = (byte) (fraction >> 24);
-        buffer[offset++] = (byte) (fraction >> 16);
-        buffer[offset++] = (byte) (fraction >> 8);
-        // low order bits should be random data
-        buffer[offset++] = (byte) (Math.random() * 255.0);
     }
 
     public static final class Response {
