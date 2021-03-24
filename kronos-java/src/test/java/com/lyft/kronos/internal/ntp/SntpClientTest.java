@@ -8,6 +8,8 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+
+import org.assertj.core.data.Offset;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -108,7 +110,7 @@ public class SntpClientTest {
         byte[] buffer = argumentCaptor.getValue();
 
         long readTimeStamp = SntpClient.readTimeStamp(buffer, 40);
-        assertThat(readTimeStamp).isBetween(1474571532121L, 1474571532123L);
+        assertThat(readTimeStamp).isCloseTo(1474571532122L, Offset.offset(300L));
     }
 
     @Test
@@ -135,11 +137,11 @@ public class SntpClientTest {
         Mockito.verify(datagramSocket).receive(any(DatagramPacket.class));
 
         assertThat(clientResponse.getCurrentTimeMs())
-                .isEqualTo(ntpTime + (firstElapsedTime - responseElapsedTime));
+                .isCloseTo(ntpTime + (firstElapsedTime - responseElapsedTime), Offset.offset(300L));
         assertThat(clientResponse.getResponseAge())
-                .isEqualTo(secondElapsedTime - responseElapsedTime);
+                .isCloseTo(secondElapsedTime - responseElapsedTime, Offset.offset(300L));
         assertThat(clientResponse.getOffsetMs())
-                .isEqualTo(ntpTime - (currentTime + (responseElapsedTime - requestElapsedTime)));
+                .isCloseTo(ntpTime - (currentTime + (responseElapsedTime - requestElapsedTime)), Offset.offset(300L));
     }
 
     @Test
