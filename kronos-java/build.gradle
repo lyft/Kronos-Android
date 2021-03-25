@@ -13,3 +13,7 @@ dependencies {
 
     testImplementation("com.squareup.okio:okio:2.10.0")
 }
+
+test {
+    testLogging.showStandardStreams = true
+}
