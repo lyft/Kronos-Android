@@ -10,17 +10,11 @@ class DnsTests {
 
     @Test
     fun resolveLocalhost() {
-        val actual = dns.resolve("localhost")
-        val expected = arrayOf(InetAddress.getByName("127.0.0.1"), InetAddress.getByName("0:0:0:0:0:0:0:1"))
-
-        assertThat(actual).isEqualTo(expected)
+        assertThat(dns.resolve("localhost")).allMatch { it.isLoopbackAddress }
     }
 
     @Test
     fun resolveUnknown() {
-        val actual = dns.resolve("unknown")
-        val expected = emptyArray<InetAddress>()
-
-        assertThat(actual).isEqualTo(expected)
+        assertThat(dns.resolve("unknown")).isEqualTo(emptyArray<InetAddress>())
     }
 }

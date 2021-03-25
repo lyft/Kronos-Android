@@ -10,9 +10,7 @@ internal interface Dns {
     class Impl : Dns {
 
         override fun resolve(host: String) = try {
-            InetAddress.getAllByName(host).orEmpty().apply {
-                println("IPs: ${this.map { it.hostAddress }}")
-            }
+            InetAddress.getAllByName(host).orEmpty()
         } catch (e: SecurityException) {
             emptyArray()
         } catch (e: UnknownHostException) {
