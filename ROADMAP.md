@@ -3,7 +3,7 @@
 Goals:
 
 * Provide explicit external API.
-* Rework internal implementation to follow the SNTP RFC.
+* Rework internal implementation to follow the SNTP RFC as much as possible.
 * Cover all internal components with extensive suite of unit tests.
 * Eliminate forked Google Java code.
 * Leverage Kotlin type system ([errors](https://arturdryomov.dev/posts/designing-errors-with-kotlin/) in particular).
@@ -40,7 +40,7 @@ internal interface NtpPackets {
 ### `.sntp.Dns`
 
 DNS resolution point. ATM there is `DnsResolver`
-but it enforces resolves hosts to IPs 1:1 which is not true IRL.
+but it resolves hosts to IPs 1:1 which is not true IRL.
 
 ```kotlin
 internal interface Dns {
@@ -63,14 +63,12 @@ internal interface Udp {
 }
 ```
 
+### `.sntp.Sntp`
+
 SNTP transferrer, uses `NtpPackets`, `Dns` and `Udp` to make it happen.
 ATM `SntpClient` does all that with little to none backing abstractions.
 
-### `.sntp.Sntp`
-
 ```kotlin
-package .sntp
-
 internal interface Sntp {
 
     fun request(clientPacket: NtpPacket): NtpPacket?
@@ -106,7 +104,7 @@ internal interface SntpClock {
 
 ### `.Clock`
 
-THE API consumers use. This is a departure from current `Clock` and `KronosClock`.
+**The** API consumers use. This is a departure from current `Clock` and `KronosClock`.
 
 * There is no information about a previous SNTP sync age.
   I believe it should be hidden from consumers as an implementation detail.
@@ -114,7 +112,7 @@ THE API consumers use. This is a departure from current `Clock` and `KronosClock
   of accuracy on its own.
 * There is no background sync triggers. At the same time, there is a recommended
   sync timeout on successful sync. NTP servers provide polling interval which should
-  be used to optimize the network traffic. I believe that sync should be done
+  be used to optimize the network traffic. I believe the sync should be done
   by consumers. For example, Android has short-living processes and it makes sense
   to use something like WorkManager to run periodic sync. At the same time,
   server processes are long-lived and might get away with a thread-based sync.
