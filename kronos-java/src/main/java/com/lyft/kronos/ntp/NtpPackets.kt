@@ -7,6 +7,8 @@ internal interface NtpPackets {
     fun decode(packetBuffer: ByteBuffer): NtpPacket
     fun encode(packet: NtpPacket): ByteBuffer
 
+    fun allocate(): ByteBuffer
+
     class Impl : NtpPackets {
 
         companion object {

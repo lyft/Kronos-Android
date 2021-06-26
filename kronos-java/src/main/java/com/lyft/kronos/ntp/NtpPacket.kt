@@ -67,6 +67,10 @@ internal data class NtpPacket(
 
 ) {
 
+    companion object {
+        const val SIZE_BYTES = 48
+    }
+
     enum class WarningLeapSecond(val value: Byte) {
         NoWarning(0),
         WarningLastMinuteHas61Seconds(1),
