@@ -22,9 +22,10 @@ internal class SntpResponseCacheImpl(
         val currentTime = syncResponseCache.currentTime
         val elapsedTime = syncResponseCache.elapsedTime
         val currentOffset = syncResponseCache.currentOffset
+        val bootCount = syncResponseCache.bootCount
         return when (elapsedTime) {
             TIME_UNAVAILABLE -> null
-            else -> SntpClient.Response(currentTime, elapsedTime, currentOffset, deviceClock)
+            else -> SntpClient.Response(currentTime, elapsedTime, bootCount, currentOffset, deviceClock)
         }
     }
 
@@ -32,6 +33,7 @@ internal class SntpResponseCacheImpl(
         synchronized(this) {
             syncResponseCache.currentTime = response.deviceCurrentTimestampMs
             syncResponseCache.elapsedTime = response.deviceElapsedTimestampMs
+            syncResponseCache.bootCount = response.deviceBootCount
             syncResponseCache.currentOffset = response.offsetMs
         }
     }

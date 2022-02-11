@@ -29,7 +29,7 @@ class MainActivity : Activity() {
     }
 
     private fun bindDeviceClock() {
-        findViewById<TextClock>(R.id.android_clock).clock = AndroidClockFactory.createDeviceClock()
+        findViewById<TextClock>(R.id.android_clock).clock = AndroidClockFactory.createDeviceClock(this)
     }
 
     private fun bindKronosClock() {
