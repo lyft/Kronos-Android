@@ -15,6 +15,8 @@ internal class KronosClockImpl(private val ntpService: SntpService, private val 
 
     override fun getElapsedTimeMs(): Long = fallbackClock.getElapsedTimeMs()
 
+    override fun getBootCount(): Int? = fallbackClock.getBootCount()
+
     override fun getCurrentTime(): KronosTime {
         val currentTime = ntpService.currentTime()
         return currentTime ?: KronosTime(posixTimeMs = fallbackClock.getCurrentTimeMs(), timeSinceLastNtpSyncMs = null)

@@ -10,6 +10,11 @@ interface Clock {
      * @return milliseconds since boot, including time spent in sleep.
      */
     fun getElapsedTimeMs(): Long
+
+    /**
+     * @return boot count. (optional)
+     */
+    fun getBootCount(): Int?
 }
 
 data class KronosTime(

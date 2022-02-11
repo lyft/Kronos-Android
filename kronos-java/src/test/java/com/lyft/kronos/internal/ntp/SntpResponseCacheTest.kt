@@ -22,6 +22,7 @@ class SntpResponseCacheTest {
     init {
         whenever(deviceClock.getCurrentTimeMs()).thenReturn(CURRENT_TIME_MS)
         whenever(deviceClock.getElapsedTimeMs()).thenReturn(ELAPSED_MS)
+        whenever(deviceClock.getBootCount()).thenReturn(BOOT_COUNT)
         cache = SntpResponseCacheImpl(syncResponseCache, deviceClock)
     }
 
@@ -38,15 +39,18 @@ class SntpResponseCacheTest {
         val currentTime = deviceClock.getCurrentTimeMs()
         val elapsedTime = deviceClock.getElapsedTimeMs()
         val currentOffset = TimeUnit.MINUTES.toMillis(5)
+        val bootCount = deviceClock.getBootCount()
 
         whenever(syncResponseCache.currentTime).thenReturn(currentTime)
         whenever(syncResponseCache.elapsedTime).thenReturn(elapsedTime)
+        whenever(syncResponseCache.bootCount).thenReturn(bootCount)
         whenever(syncResponseCache.currentOffset).thenReturn(currentOffset)
 
         val cachedResponse = cache.get()
         assertThat(cachedResponse).isNotNull()
         assertThat(cachedResponse!!.deviceCurrentTimestampMs).isEqualTo(currentTime)
         assertThat(cachedResponse.deviceElapsedTimestampMs).isEqualTo(elapsedTime)
+        assertThat(cachedResponse.deviceBootCount).isEqualTo(bootCount)
         assertThat(cachedResponse.offsetMs).isEqualTo(currentOffset)
     }
 
@@ -75,11 +79,12 @@ class SntpResponseCacheTest {
     @Throws(Exception::class)
     fun testUpdate() {
         val currentOffset = TimeUnit.HOURS.toMillis(5)
-        val response = SntpClient.Response(CURRENT_TIME_MS, ELAPSED_MS, currentOffset, deviceClock)
+        val response = SntpClient.Response(CURRENT_TIME_MS, ELAPSED_MS, BOOT_COUNT, currentOffset, deviceClock)
         cache.update(response)
 
         verify(syncResponseCache, times(1)).currentTime = CURRENT_TIME_MS
         verify(syncResponseCache, times(1)).elapsedTime = ELAPSED_MS
+        verify(syncResponseCache, times(1)).bootCount = BOOT_COUNT
         verify(syncResponseCache, times(1)).currentOffset = currentOffset
     }
 
@@ -95,5 +100,6 @@ class SntpResponseCacheTest {
 
         private val CURRENT_TIME_MS = 1522964196L
         private val ELAPSED_MS = TimeUnit.HOURS.toMillis(8)
+        private val BOOT_COUNT = 10
     }
 }

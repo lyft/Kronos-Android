@@ -14,7 +14,7 @@ object AndroidClockFactory {
      * Create a device clock that uses the OS/device specific API to retrieve time
      */
     @JvmStatic
-    fun createDeviceClock(): Clock = AndroidSystemClock()
+    fun createDeviceClock(context: Context): Clock = AndroidSystemClock(context)
 
     @JvmStatic
     @JvmOverloads
@@ -26,7 +26,7 @@ object AndroidClockFactory {
                           cacheExpirationMs: Long = CACHE_EXPIRATION_MS,
                           maxNtpResponseTimeMs: Long = MAX_NTP_RESPONSE_TIME_MS): KronosClock {
 
-        val deviceClock = createDeviceClock()
+        val deviceClock = createDeviceClock(context)
         val cache = SharedPreferenceSyncResponseCache(context.getSharedPreferences(SharedPreferenceSyncResponseCache.SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE))
 
         return ClockFactory.createKronosClock(deviceClock, cache, syncListener, ntpHosts, requestTimeoutMs, minWaitTimeBetweenSyncMs, cacheExpirationMs, maxNtpResponseTimeMs)

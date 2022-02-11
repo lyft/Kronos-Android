@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit
 
 class TextClock : TextView {
 
-    var clock : Clock = AndroidClockFactory.createDeviceClock()
+    var clock : Clock = AndroidClockFactory.createDeviceClock(context)
 
     private val ticker = object : Runnable {
         override fun run() {

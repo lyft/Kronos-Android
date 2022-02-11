@@ -72,9 +72,10 @@ public class SntpClientTest {
         when(deviceClock.getCurrentTimeMs()).thenReturn(current);
     }
 
-    private void setupDeviceClock(long current, long elapsed) {
+    private void setupDeviceClock(long current, long elapsed, Integer bootCount) {
         when(deviceClock.getCurrentTimeMs()).thenReturn(current);
         when(deviceClock.getElapsedTimeMs()).thenReturn(elapsed);
+        when(deviceClock.getBootCount()).thenReturn(bootCount);
     }
 
     @Test
@@ -177,18 +178,36 @@ public class SntpClientTest {
 
     @Test
     public void responseShouldNotAdjustWhenBootTimeSeemsEqual() {
-        final SntpClient.Response original = new SntpClient.Response(10_000_000L, 6_000L, 1L, deviceClock);
+        final SntpClient.Response original = new SntpClient.Response(10_000_000L, 6_000L, null, 1L, deviceClock);
         // 10 seconds passed
-        setupDeviceClock(10_010_000L, 16_000L);
+        setupDeviceClock(10_010_000L, 16_000L, null);
 
         assertThat(original.isFromSameBoot());
     }
 
     @Test
     public void responseShouldAdjustWhenBootTimeChanged() {
-        final SntpClient.Response original = new SntpClient.Response(10_000_000L, 6_000L, 1L, deviceClock);
+        final SntpClient.Response original = new SntpClient.Response(10_000_000L, 6_000L, null, 1L, deviceClock);
         // 10 seconds passed, but we rebooted 5 seconds ago
-        setupDeviceClock(10_010_000L, 5_000L);
+        setupDeviceClock(10_010_000L, 5_000L, null);
+
+        assertThat(original.isFromSameBoot()).isFalse();
+    }
+
+    @Test
+    public void responseShouldAdjustWhenBootCountSeemsEqual() {
+        final SntpClient.Response original = new SntpClient.Response(10_000_000L, 6_000L, 10, 1L, deviceClock);
+        // 10 seconds passed, but we changed system clock forward by 30 seconds.
+        setupDeviceClock(10_040_000L, 16_000L, 10);
+
+        assertThat(original.isFromSameBoot());
+    }
+
+    @Test
+    public void responseShouldAdjustWhenBootCountChanged() {
+        final SntpClient.Response original = new SntpClient.Response(10_000_000L, 5_000L, 10, 1L, deviceClock);
+        // 10 seconds passed, but we rebooted 5 seconds ago and changed system clock backward by 10 seconds
+        setupDeviceClock(10_000_000L, 5_000L, 11);
 
         assertThat(original.isFromSameBoot()).isFalse();
     }

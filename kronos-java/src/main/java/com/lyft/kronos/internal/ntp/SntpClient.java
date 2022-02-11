@@ -145,7 +145,7 @@ public class SntpClient {
 
             // use the times on this side of the network latency
             // (response rather than request time)
-            return new Response(responseTime, responseTicks, clockOffset, deviceClock);
+            return new Response(responseTime, responseTicks, deviceClock.getBootCount(), clockOffset, deviceClock);
         } finally {
             if (socket != null) {
                 socket.close();
@@ -206,14 +206,18 @@ public class SntpClient {
         // Device system uptime (milliseconds since reboot)
         private final long deviceElapsedTimestampMs;
 
+        // Device boot count. (optional)
+        private final Integer deviceBootCount;
+
         // delta between NTP and device clock (milliseconds)
         private final long offsetMs;
 
         private final Clock deviceClock;
 
-        Response(long deviceCurrentTimestampMs, long deviceElapsedTimestampMs, long offsetMs, Clock deviceClock) {
+        Response(long deviceCurrentTimestampMs, long deviceElapsedTimestampMs, Integer bootCount, long offsetMs, Clock deviceClock) {
             this.deviceCurrentTimestampMs = deviceCurrentTimestampMs;
             this.deviceElapsedTimestampMs = deviceElapsedTimestampMs;
+            this.deviceBootCount = bootCount;
             this.offsetMs = offsetMs;
             this.deviceClock = deviceClock;
         }
@@ -241,6 +245,10 @@ public class SntpClient {
             return deviceCurrentTimestampMs + offsetMs + getResponseAge();
         }
 
+        public Integer getDeviceBootCount() {
+            return deviceBootCount;
+        }
+
         /**
          * @return offsetMs between device wall clock time and NTP time (ntpTimestampMs - deviceTime)
          */
@@ -261,6 +269,9 @@ public class SntpClient {
          * @return True if the system has not been rebooted since this was created, false otherwise.
          */
         boolean isFromSameBoot() {
+            if (this.deviceBootCount != null) {
+                return this.deviceBootCount.equals(deviceClock.getBootCount());
+            }
             final long bootTime = this.deviceCurrentTimestampMs - this.deviceElapsedTimestampMs;
             final long systemCurrentTimeMs = deviceClock.getCurrentTimeMs();
             final long systemElapsedTimeMs = deviceClock.getElapsedTimeMs();
